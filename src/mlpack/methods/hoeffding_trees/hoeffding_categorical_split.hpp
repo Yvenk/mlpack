@@ -4,11 +4,16 @@
  *
  * A class that contains the information necessary to perform a categorical
  * split for Hoeffding trees.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_HOEFFDING_TREES_HOEFFDING_CATEGORICAL_SPLIT_HPP
-#define __MLPACK_METHODS_HOEFFDING_TREES_HOEFFDING_CATEGORICAL_SPLIT_HPP
+#ifndef MLPACK_METHODS_HOEFFDING_TREES_HOEFFDING_CATEGORICAL_SPLIT_HPP
+#define MLPACK_METHODS_HOEFFDING_TREES_HOEFFDING_CATEGORICAL_SPLIT_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 #include "categorical_split_info.hpp"
 
 namespace mlpack {
@@ -49,8 +54,8 @@ class HoeffdingCategoricalSplit
    * @param numCategories Number of categories in this dimension.
    * @param numClasses Number of classes in this dimension.
    */
-  HoeffdingCategoricalSplit(const size_t numCategories,
-                            const size_t numClasses);
+  HoeffdingCategoricalSplit(const size_t numCategories = 0,
+                            const size_t numClasses = 0);
 
   /**
    * Create the HoeffdingCategoricalSplit given a number of categories for this
@@ -103,9 +108,9 @@ class HoeffdingCategoricalSplit
 
   //! Serialize the categorical split.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */)
+  void serialize(Archive& ar, const unsigned int /* version */)
   {
-    ar & data::CreateNVP(sufficientStatistics, "sufficientStatistics");
+    ar & BOOST_SERIALIZATION_NVP(sufficientStatistics);
   }
 
  private:

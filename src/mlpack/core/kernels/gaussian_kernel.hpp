@@ -5,12 +5,18 @@
  * @author Ryan Curtin
  *
  * Implementation of the Gaussian kernel (GaussianKernel).
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_KERNELS_GAUSSIAN_KERNEL_HPP
-#define __MLPACK_CORE_KERNELS_GAUSSIAN_KERNEL_HPP
+#ifndef MLPACK_CORE_KERNELS_GAUSSIAN_KERNEL_HPP
+#define MLPACK_CORE_KERNELS_GAUSSIAN_KERNEL_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 #include <mlpack/core/metrics/lmetric.hpp>
+#include <mlpack/core/kernels/kernel_traits.hpp>
 
 namespace mlpack {
 namespace kernel {
@@ -74,9 +80,9 @@ class GaussianKernel
     // The precalculation of gamma saves us a little computation time.
     return exp(gamma * std::pow(t, 2.0));
   }
-  
+
   /**
-   * Evaluation of the gradient of Gaussian kernel 
+   * Evaluation of the gradient of Gaussian kernel
    * given the distance between two points.
    *
    * @param t The distance between the two points the kernel is evaluated on.
@@ -86,7 +92,7 @@ class GaussianKernel
   double Gradient(const double t) const {
     return 2 * t * gamma * exp(gamma * std::pow(t, 2.0));
   }
-  
+
   /**
    * Evaluation of the gradient of Gaussian kernel
    * given the squared distance between two points.
@@ -120,8 +126,8 @@ class GaussianKernel
   template<typename VecTypeA, typename VecTypeB>
   double ConvolutionIntegral(const VecTypeA& a, const VecTypeB& b)
   {
-    return Evaluate(sqrt(metric::SquaredEuclideanDistance::Evaluate(a, b) / 2.0)) /
-        (Normalizer(a.n_rows) * pow(2.0, (double) a.n_rows / 2.0));
+    return Evaluate(sqrt(metric::SquaredEuclideanDistance::Evaluate(a, b) /
+        2.0)) / (Normalizer(a.n_rows) * pow(2.0, (double) a.n_rows / 2.0));
   }
 
 
@@ -141,10 +147,10 @@ class GaussianKernel
 
   //! Serialize the kernel.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */)
+  void serialize(Archive& ar, const unsigned int /* version */)
   {
-    ar & data::CreateNVP(bandwidth, "bandwidth");
-    ar & data::CreateNVP(gamma, "gamma");
+    ar & BOOST_SERIALIZATION_NVP(bandwidth);
+    ar & BOOST_SERIALIZATION_NVP(gamma);
   }
 
  private:

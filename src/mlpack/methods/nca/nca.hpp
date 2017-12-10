@@ -3,11 +3,16 @@
  * @author Ryan Curtin
  *
  * Declaration of NCA class (Neighborhood Components Analysis).
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_NCA_NCA_HPP
-#define __MLPACK_METHODS_NCA_NCA_HPP
+#ifndef MLPACK_METHODS_NCA_NCA_HPP
+#define MLPACK_METHODS_NCA_NCA_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 #include <mlpack/core/metrics/lmetric.hpp>
 #include <mlpack/core/optimizers/sgd/sgd.hpp>
 
@@ -40,7 +45,7 @@ namespace nca /** Neighborhood Components Analysis. */ {
  * @endcode
  */
 template<typename MetricType = metric::SquaredEuclideanDistance,
-         template<typename> class OptimizerType = optimization::SGD>
+         typename OptimizerType = optimization::StandardSGD>
 class NCA
 {
  public:
@@ -78,10 +83,8 @@ class NCA
   const arma::Row<size_t>& Labels() const { return labels; }
 
   //! Get the optimizer.
-  const OptimizerType<SoftmaxErrorFunction<MetricType> >& Optimizer() const
-  { return optimizer; }
-  OptimizerType<SoftmaxErrorFunction<MetricType> >& Optimizer()
-  { return optimizer; }
+  const OptimizerType& Optimizer() const { return optimizer; }
+  OptimizerType& Optimizer() { return optimizer; }
 
  private:
   //! Dataset reference.
@@ -96,7 +99,7 @@ class NCA
   SoftmaxErrorFunction<MetricType> errorFunction;
 
   //! The optimizer to use.
-  OptimizerType<SoftmaxErrorFunction<MetricType> > optimizer;
+  OptimizerType optimizer;
 };
 
 } // namespace nca

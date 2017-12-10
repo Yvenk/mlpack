@@ -3,9 +3,14 @@
  * @author Udit Saxena
  *
  * Implementation of Perceptron class.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_PERCEPTRON_PERCEPTRON_IMPL_HPP
-#define __MLPACK_METHODS_PERCEPTRON_PERCEPTRON_IMPL_HPP
+#ifndef MLPACK_METHODS_PERCEPTRON_PERCEPTRON_IMPL_HPP
+#define MLPACK_METHODS_PERCEPTRON_PERCEPTRON_IMPL_HPP
 
 #include "perceptron.hpp"
 
@@ -53,11 +58,8 @@ Perceptron<LearnPolicy, WeightInitializationPolicy, MatType>::Perceptron(
     const size_t maxIterations) :
     maxIterations(maxIterations)
 {
-  WeightInitializationPolicy wip;
-  wip.Initialize(weights, biases, data.n_rows, numClasses);
-
   // Start training.
-  Train(data, labels);
+  Train(data, labels, numClasses);
 }
 
 /**
@@ -77,17 +79,14 @@ template<
     typename MatType
 >
 Perceptron<LearnPolicy, WeightInitializationPolicy, MatType>::Perceptron(
-    const Perceptron<>& other,
+    const Perceptron& other,
     const MatType& data,
     const arma::Row<size_t>& labels,
+    const size_t numClasses,
     const arma::rowvec& instanceWeights) :
     maxIterations(other.maxIterations)
 {
-  // Insert a row of ones at the top of the training data set.
-  WeightInitializationPolicy wip;
-  wip.Initialize(weights, biases, data.n_rows, other.NumClasses());
-
-  Train(data, labels, instanceWeights);
+  Train(data, labels, numClasses, instanceWeights);
 }
 
 /**
@@ -108,7 +107,7 @@ void Perceptron<LearnPolicy, WeightInitializationPolicy, MatType>::Classify(
     arma::Row<size_t>& predictedLabels)
 {
   arma::vec tempLabelMat;
-  arma::uword maxIndex;
+  arma::uword maxIndex = 0;
 
   // Could probably be faster if done in batch.
   for (size_t i = 0; i < test.n_cols; i++)
@@ -136,8 +135,16 @@ template<
 void Perceptron<LearnPolicy, WeightInitializationPolicy, MatType>::Train(
     const MatType& data,
     const arma::Row<size_t>& labels,
+    const size_t numClasses,
     const arma::rowvec& instanceWeights)
 {
+  // Do we need to resize the weights?
+  if (weights.n_elem != numClasses)
+  {
+    WeightInitializationPolicy wip;
+    wip.Initialize(weights, biases, data.n_rows, numClasses);
+  }
+
   size_t j, i = 0;
   bool converged = false;
   size_t tempLabel;
@@ -190,15 +197,15 @@ template<typename LearnPolicy,
          typename WeightInitializationPolicy,
          typename MatType>
 template<typename Archive>
-void Perceptron<LearnPolicy, WeightInitializationPolicy, MatType>::Serialize(
+void Perceptron<LearnPolicy, WeightInitializationPolicy, MatType>::serialize(
     Archive& ar,
     const unsigned int /* version */)
 {
   // We just need to serialize the maximum number of iterations, the weights,
   // and the biases.
-  ar & data::CreateNVP(maxIterations, "maxIterations");
-  ar & data::CreateNVP(weights, "weights");
-  ar & data::CreateNVP(biases, "biases");
+  ar & BOOST_SERIALIZATION_NVP(maxIterations);
+  ar & BOOST_SERIALIZATION_NVP(weights);
+  ar & BOOST_SERIALIZATION_NVP(biases);
 }
 
 } // namespace perceptron

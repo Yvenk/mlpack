@@ -5,11 +5,16 @@
  * An implementation of the EmptyClusterPolicy policy class for K-Means.  When
  * an empty cluster is detected, the point furthest from the centroid of the
  * cluster with maximum variance is taken to be a new cluster.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_KMEANS_MAX_VARIANCE_NEW_CLUSTER_HPP
-#define __MLPACK_METHODS_KMEANS_MAX_VARIANCE_NEW_CLUSTER_HPP
+#ifndef MLPACK_METHODS_KMEANS_MAX_VARIANCE_NEW_CLUSTER_HPP
+#define MLPACK_METHODS_KMEANS_MAX_VARIANCE_NEW_CLUSTER_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 
 namespace mlpack {
 namespace kmeans {
@@ -51,7 +56,7 @@ class MaxVarianceNewCluster
 
   //! Serialize the object.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int version);
+  void serialize(Archive& ar, const unsigned int version);
 
  private:
   //! Index of iteration for which variance is cached.

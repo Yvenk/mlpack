@@ -3,11 +3,16 @@
  * @author Ryan Curtin
  *
  * Test of the mlpack extensions to Armadillo.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
 
 #include <mlpack/core.hpp>
 #include <boost/test/unit_test.hpp>
-#include "old_boost_test_definitions.hpp"
+#include "test_tools.hpp"
 
 using namespace mlpack;
 using namespace arma;
@@ -165,8 +170,6 @@ BOOST_AUTO_TEST_CASE(MatRowColIteratorDecrementOperatorTest)
 
 // These tests don't work when the sparse iterators hold references and not
 // pointers internally because of the lack of default constructor.
-#if ARMA_VERSION_MAJOR > 4 || \
-    (ARMA_VERSION_MAJOR == 4 && ARMA_VERSION_MINOR > 320)
 
 /**
  * Test sparse const_row_col_iterator for basic functionality.
@@ -257,7 +260,5 @@ BOOST_AUTO_TEST_CASE(SpRowColIteratorTest)
 
   BOOST_REQUIRE_EQUAL(count, 1);
 }
-
-#endif
 
 BOOST_AUTO_TEST_SUITE_END();

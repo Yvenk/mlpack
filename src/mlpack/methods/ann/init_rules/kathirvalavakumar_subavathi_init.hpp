@@ -18,14 +18,23 @@
  *   year={2011}
  * }
  * @endcode
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_ANN_INIT_RULES_KATHIRVALAVAKUMAR_SUBAVATHI_INIT_HPP
-#define __MLPACK_METHODS_ANN_INIT_RULES_KATHIRVALAVAKUMAR_SUBAVATHI_INIT_HPP
+#ifndef MLPACK_METHODS_ANN_INIT_RULES_KATHIRVALAVAKUMAR_SUBAVATHI_INIT_HPP
+#define MLPACK_METHODS_ANN_INIT_RULES_KATHIRVALAVAKUMAR_SUBAVATHI_INIT_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
+
+#include "init_rules_traits.hpp"
+#include "random_init.hpp"
+
 #include <mlpack/methods/ann/activation_functions/logistic_function.hpp>
 
-#include "random_init.hpp"
+#include <iostream>
 
 namespace mlpack {
 namespace ann /** Artificial Neural Network. */ {
@@ -61,7 +70,7 @@ class KathirvalavakumarSubavathiInitialization
   KathirvalavakumarSubavathiInitialization(const arma::Mat<eT>& data,
                                            const double s) : s(s)
   {
-    dataSum = arma::sum(data + data);
+    dataSum = arma::sum(data % data);
   }
 
   /**
@@ -77,7 +86,6 @@ class KathirvalavakumarSubavathiInitialization
   {
     arma::Row<eT> b = s * arma::sqrt(3 / (rows * dataSum));
     const double theta = b.min();
-
     RandomInitialization randomInit(-theta, theta);
     randomInit.Initialize(W, rows, cols);
   }
@@ -104,11 +112,21 @@ class KathirvalavakumarSubavathiInitialization
 
  private:
   //! Parameter that defines the sum of elements in each column.
-  arma::colvec dataSum;
+  arma::rowvec dataSum;
 
   //! Parameter that defines the active region.
-  const double s;
+  double s;
 }; // class KathirvalavakumarSubavathiInitialization
+
+//! Initialization traits of the kathirvalavakumar subavath initialization rule.
+template<>
+class InitTraits<KathirvalavakumarSubavathiInitialization>
+{
+ public:
+  //! The kathirvalavakumar subavath initialization rule is applied over the
+  //! entire network.
+  static const bool UseLayer = false;
+};
 
 
 } // namespace ann

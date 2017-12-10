@@ -1,12 +1,17 @@
 /**
  * @file spherical_kernel.hpp
  * @author Neil Slagle
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_KERNELS_SPHERICAL_KERNEL_HPP
-#define __MLPACK_CORE_KERNELS_SPHERICAL_KERNEL_HPP
+#ifndef MLPACK_CORE_KERNELS_SPHERICAL_KERNEL_HPP
+#define MLPACK_CORE_KERNELS_SPHERICAL_KERNEL_HPP
 
 #include <boost/math/special_functions/gamma.hpp>
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 
 namespace mlpack {
 namespace kernel {
@@ -63,7 +68,7 @@ class SphericalKernel
     }
     double volumeSquared = pow(Normalizer(a.n_rows), 2.0);
 
-    switch(a.n_rows)
+    switch (a.n_rows)
     {
       case 1:
         return 1.0 / volumeSquared * (2.0 * bandwidth - distance);
@@ -83,7 +88,7 @@ class SphericalKernel
   double Normalizer(size_t dimension) const
   {
     return pow(bandwidth, (double) dimension) * pow(M_PI, dimension / 2.0) /
-        boost::math::tgamma(dimension / 2.0 + 1.0);
+        std::tgamma(dimension / 2.0 + 1.0);
   }
 
   /**
@@ -95,16 +100,17 @@ class SphericalKernel
   {
     return (t <= bandwidth) ? 1.0 : 0.0;
   }
-  double Gradient(double t) {
+  double Gradient(double t)
+  {
     return t == bandwidth ? arma::datum::nan : 0.0;
   }
 
   //! Serialize the object.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */)
+  void serialize(Archive& ar, const unsigned int /* version */)
   {
-    ar & data::CreateNVP(bandwidth, "bandwidth");
-    ar & data::CreateNVP(bandwidthSquared, "bandwidthSquared");
+    ar & BOOST_SERIALIZATION_NVP(bandwidth);
+    ar & BOOST_SERIALIZATION_NVP(bandwidthSquared);
   }
 
  private:

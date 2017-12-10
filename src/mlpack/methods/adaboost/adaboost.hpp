@@ -19,11 +19,16 @@
  *   pages = {297--336},
  * }
  * @endcode
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_ADABOOST_ADABOOST_HPP
-#define __MLPACK_METHODS_ADABOOST_ADABOOST_HPP
+#ifndef MLPACK_METHODS_ADABOOST_ADABOOST_HPP
+#define MLPACK_METHODS_ADABOOST_ADABOOST_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 #include <mlpack/methods/perceptron/perceptron.hpp>
 #include <mlpack/methods/decision_stump/decision_stump.hpp>
 
@@ -90,6 +95,7 @@ class AdaBoost
    */
   AdaBoost(const MatType& data,
            const arma::Row<size_t>& labels,
+           const size_t numClasses,
            const WeakLearnerType& other,
            const size_t iterations = 100,
            const double tolerance = 1e-6);
@@ -109,7 +115,7 @@ class AdaBoost
   double& Tolerance() { return tolerance; }
 
   //! Get the number of classes this model is trained on.
-  size_t Classes() const { return classes; }
+  size_t NumClasses() const { return numClasses; }
 
   //! Get the number of weak learners in the model.
   size_t WeakLearners() const { return alpha.size(); }
@@ -137,6 +143,7 @@ class AdaBoost
    */
   void Train(const MatType& data,
              const arma::Row<size_t>& labels,
+             const size_t numClasses,
              const WeakLearnerType& learner,
              const size_t iterations = 100,
              const double tolerance = 1e-6);
@@ -154,11 +161,11 @@ class AdaBoost
    * Serialize the AdaBoost model.
    */
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */);
+  void serialize(Archive& ar, const unsigned int /* version */);
 
-private:
+ private:
   //! The number of classes in the model.
-  size_t classes;
+  size_t numClasses;
   // The tolerance for change in rt and when to stop.
   double tolerance;
 
@@ -169,7 +176,6 @@ private:
 
   //! To check for the bound for the Hamming loss.
   double ztProduct;
-
 }; // class AdaBoost
 
 } // namespace adaboost

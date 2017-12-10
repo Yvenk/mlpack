@@ -5,11 +5,17 @@
  *
  * Utility class to fit a GMM using the EM algorithm.  Used by
  * GMM::Estimate<>().
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_GMM_EM_FIT_HPP
-#define __MLPACK_METHODS_GMM_EM_FIT_HPP
+#ifndef MLPACK_METHODS_GMM_EM_FIT_HPP
+#define MLPACK_METHODS_GMM_EM_FIT_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
+#include <mlpack/core/dists/gaussian_distribution.hpp>
 
 // Default clustering mechanism.
 #include <mlpack/methods/kmeans/kmeans.hpp>
@@ -124,7 +130,7 @@ class EMFit
 
   //! Serialize the fitter.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int version);
+  void serialize(Archive& ar, const unsigned int version);
 
  private:
   /**
@@ -155,6 +161,26 @@ class EMFit
                        const std::vector<distribution::GaussianDistribution>&
                            dists,
                        const arma::vec& weights) const;
+
+  // Armadillo uses uword internally as an OpenMP index type, which crashes
+  // Visual Studio.
+  #ifndef _WIN32
+  /**
+   * Use the Armadillo gmm_diag clusterer to train a GMM with diagonal
+   * covariance.  If InitialClusteringType == kmeans::KMeans<>, this will use
+   * Armadillo's initialization also.
+   *
+   * @param observations Data to train on.
+   * @param dists Distributions to store model in.
+   * @param weights Prior weights.
+   * @param useInitialModel If true, the existing model will be used.
+   */
+  void ArmadilloGMMWrapper(
+      const arma::mat& observations,
+      std::vector<distribution::GaussianDistribution>& dists,
+      arma::vec& weights,
+      const bool useInitialModel);
+  #endif
 
   //! Maximum iterations of EM algorithm.
   size_t maxIterations;

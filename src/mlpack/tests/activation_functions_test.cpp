@@ -4,38 +4,30 @@
  * @author Dhawal Arora
  *
  * Tests for the various activation functions.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
 #include <mlpack/core.hpp>
 
+#include <mlpack/methods/ann/layer/layer.hpp>
 #include <mlpack/methods/ann/activation_functions/logistic_function.hpp>
 #include <mlpack/methods/ann/activation_functions/identity_function.hpp>
 #include <mlpack/methods/ann/activation_functions/softsign_function.hpp>
 #include <mlpack/methods/ann/activation_functions/tanh_function.hpp>
 #include <mlpack/methods/ann/activation_functions/rectifier_function.hpp>
-
-#include <mlpack/methods/ann/ffn.hpp>
-#include <mlpack/methods/ann/init_rules/random_init.hpp>
-#include <mlpack/methods/ann/optimizer/rmsprop.hpp>
-#include <mlpack/methods/ann/performance_functions/mse_function.hpp>
-
-#include <mlpack/methods/ann/layer/bias_layer.hpp>
-#include <mlpack/methods/ann/layer/linear_layer.hpp>
-#include <mlpack/methods/ann/layer/base_layer.hpp>
-#include <mlpack/methods/ann/layer/binary_classification_layer.hpp>
-#include <mlpack/methods/ann/layer/leaky_relu_layer.hpp>
-#include <mlpack/methods/ann/layer/hard_tanh_layer.hpp>
+#include <mlpack/methods/ann/activation_functions/softplus_function.hpp>
+#include <mlpack/methods/ann/activation_functions/swish_function.hpp>
 
 #include <boost/test/unit_test.hpp>
-#include "old_boost_test_definitions.hpp"
+#include "test_tools.hpp"
 
 using namespace mlpack;
 using namespace mlpack::ann;
 
 BOOST_AUTO_TEST_SUITE(ActivationFunctionsTest);
-
-// Be careful!  When writing new tests, always get the boolean value and store
-// it in a temporary, because the Boost unit test macros do weird things and
-// will cause bizarre problems.
 
 // Generate dataset for activation function tests.
 const arma::colvec activationData("-2 3.2 4.5 -100.2 1 -1 2 0");
@@ -54,13 +46,13 @@ void CheckActivationCorrect(const arma::colvec input, const arma::colvec target)
   // Test the activation function using a single value as input.
   for (size_t i = 0; i < target.n_elem; i++)
   {
-    BOOST_REQUIRE_CLOSE(ActivationFunction::fn(input.at(i)),
+    BOOST_REQUIRE_CLOSE(ActivationFunction::Fn(input.at(i)),
         target.at(i), 1e-3);
   }
 
   // Test the activation function using the entire vector as input.
   arma::colvec activations;
-  ActivationFunction::fn(input, activations);
+  ActivationFunction::Fn(input, activations);
   for (size_t i = 0; i < activations.n_elem; i++)
   {
     BOOST_REQUIRE_CLOSE(activations.at(i), target.at(i), 1e-3);
@@ -81,13 +73,13 @@ void CheckDerivativeCorrect(const arma::colvec input, const arma::colvec target)
   // Test the calculation of the derivatives using a single value as input.
   for (size_t i = 0; i < target.n_elem; i++)
   {
-    BOOST_REQUIRE_CLOSE(ActivationFunction::deriv(input.at(i)),
+    BOOST_REQUIRE_CLOSE(ActivationFunction::Deriv(input.at(i)),
         target.at(i), 1e-3);
   }
 
   // Test the calculation of the derivatives using the entire vector as input.
   arma::colvec derivatives;
-  ActivationFunction::deriv(input, derivatives);
+  ActivationFunction::Deriv(input, derivatives);
   for (size_t i = 0; i < derivatives.n_elem; i++)
   {
     BOOST_REQUIRE_CLOSE(derivatives.at(i), target.at(i), 1e-3);
@@ -108,14 +100,14 @@ void CheckInverseCorrect(const arma::colvec input)
     // Test the calculation of the inverse using a single value as input.
   for (size_t i = 0; i < input.n_elem; i++)
   {
-    BOOST_REQUIRE_CLOSE(ActivationFunction::inv(ActivationFunction::fn(
+    BOOST_REQUIRE_CLOSE(ActivationFunction::Inv(ActivationFunction::Fn(
         input.at(i))), input.at(i), 1e-3);
   }
 
   // Test the calculation of the inverse using the entire vector as input.
   arma::colvec activations;
-  ActivationFunction::fn(input, activations);
-  ActivationFunction::inv(activations, activations);
+  ActivationFunction::Fn(input, activations);
+  ActivationFunction::Inv(activations, activations);
 
   for (size_t i = 0; i < input.n_elem; i++)
   {
@@ -125,7 +117,7 @@ void CheckInverseCorrect(const arma::colvec input)
 
 /*
  * Implementation of the HardTanH activation function test. The function is
- * implemented as a HardTanH Layer in hard_tanh_layer.hpp
+ * implemented as a HardTanH Layer in hard_tanh.hpp
  *
  * @param input Input data used for evaluating the HardTanH activation function.
  * @param target Target data used to evaluate the HardTanH activation.
@@ -133,11 +125,11 @@ void CheckInverseCorrect(const arma::colvec input)
 void CheckHardTanHActivationCorrect(const arma::colvec input,
                                     const arma::colvec target)
 {
-  HardTanHLayer<> htf;
+  HardTanH<> htf;
 
   // Test the activation function using the entire vector as input.
   arma::colvec activations;
-  htf.Forward(input, activations);
+  htf.Forward(std::move(input), std::move(activations));
   for (size_t i = 0; i < activations.n_elem; i++)
   {
     BOOST_REQUIRE_CLOSE(activations.at(i), target.at(i), 1e-3);
@@ -146,7 +138,7 @@ void CheckHardTanHActivationCorrect(const arma::colvec input,
 
 /*
  * Implementation of the HardTanH activation function derivative test. The
- * derivative is implemented as HardTanH Layer in hard_tanh_layer.hpp
+ * derivative is implemented as HardTanH Layer in hard_tanh.hpp
  *
  * @param input Input data used for evaluating the HardTanH activation function.
  * @param target Target data used to evaluate the HardTanH activation.
@@ -154,14 +146,15 @@ void CheckHardTanHActivationCorrect(const arma::colvec input,
 void CheckHardTanHDerivativeCorrect(const arma::colvec input,
                                     const arma::colvec target)
 {
-  HardTanHLayer<> htf;
+  HardTanH<> htf;
 
   // Test the calculation of the derivatives using the entire vector as input.
   arma::colvec derivatives;
 
   // This error vector will be set to 1 to get the derivatives.
-  arma::colvec error(input.n_elem);
-  htf.Backward(input, (arma::colvec)error.ones(), derivatives);
+  arma::colvec error = arma::ones<arma::colvec>(input.n_elem);
+  htf.Backward(std::move(input), std::move(error), std::move(derivatives));
+
   for (size_t i = 0; i < derivatives.n_elem; i++)
   {
     BOOST_REQUIRE_CLOSE(derivatives.at(i), target.at(i), 1e-3);
@@ -169,20 +162,20 @@ void CheckHardTanHDerivativeCorrect(const arma::colvec input,
 }
 
 /*
- * Implementation of the LeakyReLU activation function test. The function is  
- * implemented as LeakyReLU layer in the file leaky_relu_layer.hpp
- * 
+ * Implementation of the LeakyReLU activation function test. The function is
+ * implemented as LeakyReLU layer in the file leaky_relu.hpp
+ *
  * @param input Input data used for evaluating the LeakyReLU activation function.
  * @param target Target data used to evaluate the LeakyReLU activation.
  */
 void CheckLeakyReLUActivationCorrect(const arma::colvec input,
                                      const arma::colvec target)
 {
-  LeakyReLULayer<> lrf;
+  LeakyReLU<> lrf;
 
   // Test the activation function using the entire vector as input.
   arma::colvec activations;
-  lrf.Forward(input, activations);
+  lrf.Forward(std::move(input), std::move(activations));
   for (size_t i = 0; i < activations.n_elem; i++)
   {
     BOOST_REQUIRE_CLOSE(activations.at(i), target.at(i), 1e-3);
@@ -190,29 +183,146 @@ void CheckLeakyReLUActivationCorrect(const arma::colvec input,
 }
 
 /*
- * Implementation of the LeakyReLU activation function derivative test. 
- * The derivative function is implemented as LeakyReLU layer in the file 
+ * Implementation of the LeakyReLU activation function derivative test.
+ * The derivative function is implemented as LeakyReLU layer in the file
  * leaky_relu_layer.hpp
  *
  * @param input Input data used for evaluating the LeakyReLU activation function.
  * @param target Target data used to evaluate the LeakyReLU activation.
  */
-
-void CheckLeakyReLUDerivativeCorrect(const arma::colvec input, 
+void CheckLeakyReLUDerivativeCorrect(const arma::colvec input,
                                      const arma::colvec target)
 {
-  LeakyReLULayer<> lrf;
+  LeakyReLU<> lrf;
 
   // Test the calculation of the derivatives using the entire vector as input.
   arma::colvec derivatives;
 
   // This error vector will be set to 1 to get the derivatives.
-  arma::colvec error(input.n_elem);
-  lrf.Backward(input, (arma::colvec)error.ones(), derivatives);
+  arma::colvec error = arma::ones<arma::colvec>(input.n_elem);
+  lrf.Backward(std::move(input), std::move(error), std::move(derivatives));
   for (size_t i = 0; i < derivatives.n_elem; i++)
   {
     BOOST_REQUIRE_CLOSE(derivatives.at(i), target.at(i), 1e-3);
   }
+}
+
+/*
+ * Implementation of the ELU activation function test. The function is
+ * implemented as ELU layer in the file elu.hpp
+ *
+ * @param input Input data used for evaluating the ELU activation function.
+ * @param target Target data used to evaluate the ELU activation.
+ */
+void CheckELUActivationCorrect(const arma::colvec input,
+                                     const arma::colvec target)
+{
+  ELU<> lrf;
+
+  // Test the activation function using the entire vector as input.
+  arma::colvec activations;
+  lrf.Forward(std::move(input), std::move(activations));
+  for (size_t i = 0; i < activations.n_elem; i++)
+  {
+    BOOST_REQUIRE_CLOSE(activations.at(i), target.at(i), 1e-3);
+  }
+}
+
+/*
+ * Implementation of the ELU activation function derivative test. The function
+ * is implemented as ELU layer in the file elu.hpp
+ *
+ * @param input Input data used for evaluating the ELU activation function.
+ * @param target Target data used to evaluate the ELU activation.
+ */
+void CheckELUDerivativeCorrect(const arma::colvec input,
+                                     const arma::colvec target)
+{
+  ELU<> lrf;
+
+  // Test the calculation of the derivatives using the entire vector as input.
+  arma::colvec derivatives;
+
+  // This error vector will be set to 1 to get the derivatives.
+  arma::colvec error = arma::ones<arma::colvec>(input.n_elem);
+  lrf.Backward(std::move(input), std::move(error), std::move(derivatives));
+  for (size_t i = 0; i < derivatives.n_elem; i++)
+  {
+    BOOST_REQUIRE_CLOSE(derivatives.at(i), target.at(i), 1e-3);
+  }
+}
+
+/*
+ * Implementation of the PReLU activation function test. The function
+ * is implemented as PReLU layer in the file perametric_relu.hpp
+ *
+ * @param input Input data used for evaluating the PReLU activation
+ *   function.
+ * @param target Target data used to evaluate the PReLU activation.
+ */
+void CheckPReLUActivationCorrect(const arma::colvec input,
+                                          const arma::colvec target)
+{
+  PReLU<> prelu;
+
+  // Test the activation function using the entire vector as input.
+  arma::colvec activations;
+  prelu.Forward(std::move(input), std::move(activations));
+  for (size_t i = 0; i < activations.n_elem; i++)
+  {
+    BOOST_REQUIRE_CLOSE(activations.at(i), target.at(i), 1e-3);
+  }
+}
+
+/*
+ * Implementation of the PReLU activation function derivative test.
+ * The function is implemented as PReLU layer in the file
+ * perametric_relu.hpp
+ *
+ * @param input Input data used for evaluating the PReLU activation
+ *   function.
+ * @param target Target data used to evaluate the PReLU activation.
+ */
+void CheckPReLUDerivativeCorrect(const arma::colvec input,
+                                          const arma::colvec target)
+{
+  PReLU<> prelu;
+
+  // Test the calculation of the derivatives using the entire vector as input.
+  arma::colvec derivatives;
+
+  // This error vector will be set to 1 to get the derivatives.
+  arma::colvec error = arma::ones<arma::colvec>(input.n_elem);
+  prelu.Backward(std::move(input), std::move(error), std::move(derivatives));
+  for (size_t i = 0; i < derivatives.n_elem; i++)
+  {
+    BOOST_REQUIRE_CLOSE(derivatives.at(i), target.at(i), 1e-3);
+  }
+}
+
+/*
+ * Implementation of the PReLU activation function gradient test.
+ * The function is implemented as PReLU layer in the file
+ * perametric_relu.hpp
+ *
+ * @param input Input data used for evaluating the PReLU activation
+ *   function.
+ * @param target Target data used to evaluate the PReLU gradient.
+ */
+void CheckPReLUGradientCorrect(const arma::colvec input,
+                                        const arma::colvec target)
+{
+  PReLU<> prelu;
+
+  // Test the calculation of the derivatives using the entire vector as input.
+  arma::colvec gradient;
+
+  // This error vector will be set to 1 to get the gradient.
+  arma::colvec error = arma::ones<arma::colvec>(input.n_elem);
+  prelu.Gradient(std::move(input), std::move(error), std::move(gradient));
+  BOOST_REQUIRE_EQUAL(gradient.n_rows, 1);
+  BOOST_REQUIRE_EQUAL(gradient.n_cols, 1);
+  BOOST_REQUIRE_CLOSE(gradient(0), target(0), 1e-3);
 }
 
 /**
@@ -324,5 +434,74 @@ BOOST_AUTO_TEST_CASE(HardTanHFunctionTest)
   CheckHardTanHDerivativeCorrect(activationData, desiredDerivatives);
 }
 
-BOOST_AUTO_TEST_SUITE_END();
+/**
+ * Basic test of the ELU function.
+ */
+BOOST_AUTO_TEST_CASE(ELUFunctionTest)
+{
+  const arma::colvec desiredActivations("-0.86466471 3.2 4.5 -1.0 \
+                                         1 -0.63212055 2 0");
 
+  const arma::colvec desiredDerivatives("0.13533529 1 1 0 \
+                                         1 0.36787945 1 1");
+
+  CheckELUActivationCorrect(activationData, desiredActivations);
+  CheckELUDerivativeCorrect(desiredActivations, desiredDerivatives);
+}
+
+/**
+ * Basic test of the softplus function.
+ */
+BOOST_AUTO_TEST_CASE(SoftplusFunctionTest)
+{
+  const arma::colvec desiredActivations("0.12692801 3.23995333 4.51104774 \
+                                         0 1.31326168 0.31326168 2.12692801 \
+                                         0.69314718");
+
+  const arma::colvec desiredDerivatives("0.53168946 0.96231041 0.98913245 \
+                                         0.5 0.78805844 0.57768119 0.89349302\
+                                         0.66666666");
+
+  CheckActivationCorrect<SoftplusFunction>(activationData, desiredActivations);
+  CheckDerivativeCorrect<SoftplusFunction>(desiredActivations,
+      desiredDerivatives);
+  CheckInverseCorrect<SoftplusFunction>(desiredActivations);
+}
+
+/**
+ * Basic test of the PReLU function.
+ */
+BOOST_AUTO_TEST_CASE(PReLUFunctionTest)
+{
+  const arma::colvec desiredActivations("-0.06 3.2 4.5 -3.006 \
+                                         1 -0.03 2 0");
+
+  const arma::colvec desiredDerivatives("0.03 1 1 0.03 \
+                                         1 0.03 1 1");
+  const arma::colvec desiredGradient("-103.2");
+
+  CheckPReLUActivationCorrect(activationData, desiredActivations);
+  CheckPReLUDerivativeCorrect(desiredActivations, desiredDerivatives);
+  CheckPReLUGradientCorrect(activationData, desiredGradient);
+}
+
+/**
+ * Basic test of the swish function.
+ */
+BOOST_AUTO_TEST_CASE(SwishFunctionTest)
+{
+  // Hand-calculated values using Python interpreter.
+  const arma::colvec desiredActivations("-0.238405 3.07466 4.45055 \
+                                         -3.05183208657e-42 0.731058 -0.26894 \
+                                         1.76159 0");
+
+  const arma::colvec desiredDerivatives("0.3819171 1.0856295 1.039218 \
+                                         0.5 0.83540367 0.3671335 1.073787\
+                                         0.5");
+
+  CheckActivationCorrect<SwishFunction>(activationData, desiredActivations);
+  CheckDerivativeCorrect<SwishFunction>(desiredActivations,
+      desiredDerivatives);
+}
+
+BOOST_AUTO_TEST_SUITE_END();

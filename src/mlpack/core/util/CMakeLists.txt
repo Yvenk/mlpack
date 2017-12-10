@@ -10,18 +10,24 @@ set(SOURCES
   cli_deleter.hpp
   cli_deleter.cpp
   cli_impl.hpp
+  deprecated.hpp
+  hyphenate_string.hpp
+  is_std_vector.hpp
   log.hpp
   log.cpp
+  mlpack_main.hpp
   nulloutstream.hpp
-  option.hpp
-  option.cpp
-  option_impl.hpp
+  param_checks.hpp
+  param_checks_impl.hpp
+  param_data.hpp
   prefixedoutstream.hpp
   prefixedoutstream.cpp
   prefixedoutstream_impl.hpp
+  program_doc.hpp
+  program_doc.cpp
   sfinae_utility.hpp
-  string_util.hpp
-  string_util.cpp
+  singletons.hpp
+  singletons.cpp
   timers.hpp
   timers.cpp
   version.hpp

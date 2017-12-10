@@ -14,11 +14,16 @@
  *   booktitle={{Advances of Neural Information Processing Systems}},
  *   year={2009}
  * }
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_RANN_RA_SEARCH_HPP
-#define __MLPACK_METHODS_RANN_RA_SEARCH_HPP
+#ifndef MLPACK_METHODS_RANN_RA_SEARCH_HPP
+#define MLPACK_METHODS_RANN_RA_SEARCH_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 
 #include <mlpack/core/tree/binary_space_tree.hpp>
 
@@ -33,7 +38,7 @@ namespace neighbor {
 
 // Forward declaration.
 template<typename SortPolicy>
-class RAModel;
+class TrainVisitor;
 
 /**
  * The RASearch class: This class provides a generic manner to perform
@@ -292,6 +297,11 @@ class RASearch
   void Train(MatType&& referenceSet);
 
   /**
+   * Set the reference tree to a new reference tree.
+   */
+  void Train(Tree* referenceTree);
+
+  /**
    * Compute the rank approximate nearest neighbors of each query point in the
    * query set and store the output in the given matrices. The matrices will be
    * set to the size of n columns by k rows, where n is the number of points in
@@ -411,7 +421,7 @@ class RASearch
 
   //! Serialize the object.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */);
+  void serialize(Archive& ar, const unsigned int /* version */);
 
  private:
   //! Permutations of reference points during tree building.
@@ -446,8 +456,9 @@ class RASearch
   //! Instantiation of kernel.
   MetricType metric;
 
-  //! RAModel can modify internal members as necessary.
-  friend class RAModel<SortPolicy>;
+  //! For access to mappings when building models.
+  template<typename SortPol>
+  friend class TrainVisitor;
 }; // class RASearch
 
 } // namespace neighbor

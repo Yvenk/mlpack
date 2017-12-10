@@ -3,9 +3,14 @@
  * @author Ryan Curtin
  *
  * Implementation of save functionality.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_DATA_SAVE_IMPL_HPP
-#define __MLPACK_CORE_DATA_SAVE_IMPL_HPP
+#ifndef MLPACK_CORE_DATA_SAVE_IMPL_HPP
+#define MLPACK_CORE_DATA_SAVE_IMPL_HPP
 
 // In case it hasn't already been included.
 #include "save.hpp"
@@ -16,10 +21,25 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 
-#include "serialization_shim.hpp"
-
 namespace mlpack {
 namespace data {
+
+template<typename eT>
+bool Save(const std::string& filename,
+          const arma::Col<eT>& vec,
+          const bool fatal)
+{
+  // Don't transpose: one observation per line (for CSVs at least).
+  return Save(filename, vec, fatal, false);
+}
+
+template<typename eT>
+bool Save(const std::string& filename,
+          const arma::Row<eT>& rowvec,
+          const bool fatal)
+{
+  return Save(filename, rowvec, fatal, true);
+}
 
 template<typename eT>
 bool Save(const std::string& filename,
@@ -138,7 +158,11 @@ bool Save(const std::string& filename,
   {
     arma::Mat<eT> tmp = trans(matrix);
 
-    if (!tmp.quiet_save(stream, saveType))
+    // We can't save with streams for HDF5.
+    const bool success = (saveType == arma::hdf5_binary) ?
+        tmp.quiet_save(filename, saveType) :
+        tmp.quiet_save(stream, saveType);
+    if (!success)
     {
       Timer::Stop("saving_data");
       if (fatal)
@@ -151,7 +175,11 @@ bool Save(const std::string& filename,
   }
   else
   {
-    if (!matrix.quiet_save(stream, saveType))
+    // We can't save with streams for HDF5.
+    const bool success = (saveType == arma::hdf5_binary) ?
+        matrix.quiet_save(filename, saveType) :
+        matrix.quiet_save(stream, saveType);
+    if (!success)
     {
       Timer::Stop("saving_data");
       if (fatal)
@@ -229,17 +257,17 @@ bool Save(const std::string& filename,
     if (f == format::xml)
     {
       boost::archive::xml_oarchive ar(ofs);
-      ar << CreateNVP(t, name);
+      ar << boost::serialization::make_nvp(name.c_str(), t);
     }
     else if (f == format::text)
     {
       boost::archive::text_oarchive ar(ofs);
-      ar << CreateNVP(t, name);
+      ar << boost::serialization::make_nvp(name.c_str(), t);
     }
     else if (f == format::binary)
     {
       boost::archive::binary_oarchive ar(ofs);
-      ar << CreateNVP(t, name);
+      ar << boost::serialization::make_nvp(name.c_str(), t);
     }
 
     return true;

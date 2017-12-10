@@ -1,9 +1,147 @@
+### mlpack ?.?.?
+###### ????-??-??
+  * Speed and memory improvements for DBSCAN.  --single_mode can now be used for
+    situations where previously RAM usage was too high.
+
+  * Bump minimum required version of Armadillo to 6.500.0.
+
+  * Add automatically generated Python bindings.  These have the same interface
+    as the command-line programs.
+
+### mlpack 2.2.5
+###### 2017-08-25
+  * Compilation fix for some systems (#1082).
+
+  * Fix PARAM_INT_OUT() (#1100).
+
+### mlpack 2.2.4
+###### 2017-07-18
+  * Speed and memory improvements for DBSCAN. --single_mode can now be used for
+    situations where previously RAM usage was too high.
+
+  * Fix bug in CF causing incorrect recommendations.
+
+### mlpack 2.2.3
+###### 2017-05-24
+  * Bug fix for --predictions_file in mlpack_decision_tree program.
+
+### mlpack 2.2.2
+###### 2017-05-04
+  * Install backwards-compatibility mlpack_allknn and mlpack_allkfn programs;
+    note they are deprecated and will be removed in mlpack 3.0.0 (#992).
+
+  * Fix RStarTree bug that surfaced on OS X only (#964).
+
+  * Small fixes for MiniBatchSGD and SGD and tests.
+
+### mlpack 2.2.1
+###### 2017-04-13
+  * Compilation fix for mlpack_nca and mlpack_test on older Armadillo versions
+    (#984).
+
+### mlpack 2.2.0
+###### 2017-03-21
+  * Bugfix for mlpack_knn program (#816).
+
+  * Add decision tree implementation in methods/decision_tree/.  This is very
+    similar to a C4.5 tree learner.
+
+  * Add DBSCAN implementation in methods/dbscan/.
+
+  * Add support for multidimensional discrete distributions (#810, #830).
+
+  * Better output for Log::Debug/Log::Info/Log::Warn/Log::Fatal for Armadillo
+    objects (#895, #928).
+
+  * Refactor categorical CSV loading with boost::spirit for faster loading
+    (#681).
+
+### mlpack 2.1.1
+###### 2016-12-22
+  * HMMs now use random initialization; this should fix some convergence issues
+    (#828).
+
+  * HMMs now initialize emissions according to the distribution of observations
+    (#833).
+
+  * Minor fix for formatted output (#814).
+
+  * Fix DecisionStump to properly work with any input type.
+
+### mlpack 2.1.0
+###### 2016-10-31
+  * Fixed CoverTree to properly handle single-point datasets.
+
+  * Fixed a bug in CosineTree (and thus QUIC-SVD) that caused split failures for
+    some datasets (#717).
+
+  * Added mlpack_preprocess_describe program, which can be used to print
+    statistics on a given dataset (#742).
+
+  * Fix prioritized recursion for k-furthest-neighbor search (mlpack_kfn and the
+    KFN class), leading to orders-of-magnitude speedups in some cases.
+
+  * Bump minimum required version of Armadillo to 4.200.0.
+
+  * Added simple Gradient Descent optimizer, found in
+    src/mlpack/core/optimizers/gradient_descent/ (#792).
+
+  * Added approximate furthest neighbor search algorithms QDAFN and
+    DrusillaSelect in src/mlpack/methods/approx_kfn/, with command-line program
+    mlpack_approx_kfn.
+
+### mlpack 2.0.3
+###### 2016-07-21
+  * Added multiprobe LSH (#691).  The parameter 'T' to LSHSearch::Search() can
+    now be used to control the number of extra bins that are probed, as can the
+    -T (--num_probes) option to mlpack_lsh.
+
+  * Added the Hilbert R tree to src/mlpack/core/tree/rectangle_tree/ (#664).  It
+    can be used as the typedef HilbertRTree, and it is now an option in the
+    mlpack_knn, mlpack_kfn, mlpack_range_search, and mlpack_krann command-line
+    programs.
+
+  * Added the mlpack_preprocess_split and mlpack_preprocess_binarize programs,
+    which can be used for preprocessing code (#650, #666).
+
+  * Added OpenMP support to LSHSearch and mlpack_lsh (#700).
+
 ### mlpack 2.0.2
-###### 2016-??-??
+###### 2016-06-20
+  * Added the function LSHSearch::Projections(), which returns an arma::cube
+    with each projection table in a slice (#663).  Instead of Projection(i), you
+    should now use Projections().slice(i).
+
+  * A new constructor has been added to LSHSearch that creates objects using
+    projection tables provided in an arma::cube (#663).
+
   * Handle zero-variance dimensions in DET (#515).
 
   * Add MiniBatchSGD optimizer (src/mlpack/core/optimizers/minibatch_sgd/) and
     allow its use in mlpack_logistic_regression and mlpack_nca programs.
+
+  * Add better backtrace support from Grzegorz Krajewski for Log::Fatal messages
+    when compiled with debugging and profiling symbols.  This requires libbfd
+    and libdl to be present during compilation.
+
+  * CosineTree test fix from Mikhail Lozhnikov (#358).
+
+  * Fixed HMM initial state estimation (#600).
+
+  * Changed versioning macros __MLPACK_VERSION_MAJOR, __MLPACK_VERSION_MINOR,
+    and __MLPACK_VERSION_PATCH to MLPACK_VERSION_MAJOR, MLPACK_VERSION_MINOR,
+    and MLPACK_VERSION_PATCH.  The old names will remain in place until
+    mlpack 3.0.0.
+
+  * Renamed mlpack_allknn, mlpack_allkfn, and mlpack_allkrann to mlpack_knn,
+    mlpack_kfn, and mlpack_krann.  The mlpack_allknn, mlpack_allkfn, and
+    mlpack_allkrann programs will remain as copies until mlpack 3.0.0.
+
+  * Add --random_initialization option to mlpack_hmm_train, for use when no
+    labels are provided.
+
+  * Add --kill_empty_clusters option to mlpack_kmeans and KillEmptyClusters
+    policy for the KMeans class (#595, #596).
 
 ### mlpack 2.0.1
 ###### 2016-02-04

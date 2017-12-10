@@ -4,6 +4,11 @@
  * @author Ryan Curtin
  *
  * Utilities for rank-approximate neighbor search.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
 #include "ra_util.hpp"
 
@@ -25,11 +30,6 @@ size_t mlpack::neighbor::RAUtil::MinimumSamplesReqd(const size_t n,
   double prob;
   Log::Assert(alpha <= 1.0);
 
-  // going through all values of sample sizes
-  // to find the minimum samples required to satisfy the
-  // desired bound
-  bool done = false;
-
   // This performs a binary search on the integer values between 'lb = k'
   // and 'ub = n' to find the minimum number of samples 'm' required to obtain
   // the desired success probability 'alpha'.
@@ -39,8 +39,8 @@ size_t mlpack::neighbor::RAUtil::MinimumSamplesReqd(const size_t n,
 
     if (prob > alpha)
     {
-      if (prob - alpha < 0.001 || ub < lb + 2) {
-        done = true;
+      if (prob - alpha < 0.001 || ub < lb + 2)
+      {
         break;
       }
       else
@@ -60,13 +60,11 @@ size_t mlpack::neighbor::RAUtil::MinimumSamplesReqd(const size_t n,
       }
       else
       {
-        done = true;
         break;
       }
     }
     m = (ub + lb) / 2;
-
-  } while (!done);
+  } while (true);
 
   return (std::min(m + 1, n));
 }
@@ -84,7 +82,6 @@ double mlpack::neighbor::RAUtil::SuccessProbability(const size_t n,
     double eps = (double) t / (double) n;
 
     return 1.0 - std::pow(1.0 - eps, (double) m);
-
   } // Faster implementation for topK = 1.
   else
   {
@@ -148,7 +145,7 @@ double mlpack::neighbor::RAUtil::SuccessProbability(const size_t n,
       else
         jTrans = m - j;
 
-      for(size_t i = 2; i <= jTrans; i++)
+      for (size_t i = 2; i <= jTrans; i++)
       {
         mCj *= (double) (m - (i - 1));
         mCj /= (double) i;
@@ -163,20 +160,4 @@ double mlpack::neighbor::RAUtil::SuccessProbability(const size_t n,
 
     return sum;
   } // For k > 1.
-}
-
-void mlpack::neighbor::RAUtil::ObtainDistinctSamples(
-    const size_t numSamples,
-    const size_t rangeUpperBound,
-    arma::uvec& distinctSamples)
-{
-  // Keep track of the points that are sampled.
-  arma::Col<size_t> sampledPoints;
-  sampledPoints.zeros(rangeUpperBound);
-
-  for (size_t i = 0; i < numSamples; i++)
-    sampledPoints[(size_t) math::RandInt(rangeUpperBound)]++;
-
-  distinctSamples = arma::find(sampledPoints > 0);
-  return;
 }

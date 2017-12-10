@@ -3,9 +3,14 @@
  *
  * Definition of the Range class, which represents a simple range with a lower
  * and upper bound.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_MATH_RANGE_HPP
-#define __MLPACK_CORE_MATH_RANGE_HPP
+#ifndef MLPACK_CORE_MATH_RANGE_HPP
+#define MLPACK_CORE_MATH_RANGE_HPP
 
 namespace mlpack {
 namespace math {
@@ -174,7 +179,7 @@ class RangeType
    * Serialize the range object.
    */
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int version);
+  void serialize(Archive& ar, const unsigned int version);
 };
 
 } // namespace math
@@ -183,4 +188,4 @@ class RangeType
 // Include inlined implementation.
 #include "range_impl.hpp"
 
-#endif // __MLPACK_CORE_MATH_RANGE_HPP
+#endif // MLPACK_CORE_MATH_RANGE_HPP

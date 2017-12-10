@@ -1,3 +1,14 @@
+/**
+ * @file svd_batch_test.cpp
+ * @author Sumedh Ghaisas
+ *
+ * Test the SVDBatchLearning class for AMF.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
+ */
 #include <mlpack/core.hpp>
 #include <mlpack/methods/amf/amf.hpp>
 #include <mlpack/methods/amf/update_rules/svd_batch_learning.hpp>
@@ -7,7 +18,7 @@
 #include <mlpack/methods/amf/termination_policies/simple_tolerance_termination.hpp>
 
 #include <boost/test/unit_test.hpp>
-#include "old_boost_test_definitions.hpp"
+#include "test_tools.hpp"
 
 BOOST_AUTO_TEST_SUITE(SVDBatchTest);
 
@@ -22,7 +33,7 @@ using namespace arma;
 BOOST_AUTO_TEST_CASE(SVDBatchConvergenceElementTest)
 {
   sp_mat data;
-  data.sprandn(1000, 1000, 0.2);
+  data.sprandn(100, 100, 0.2);
   AMF<SimpleToleranceTermination<sp_mat>,
       AverageInitialization,
       SVDBatchLearning> amf;
@@ -62,7 +73,7 @@ class SpecificRandomInitialization
 BOOST_AUTO_TEST_CASE(SVDBatchMomentumTest)
 {
   mat dataset;
-  data::Load("GroupLens100k.csv", dataset);
+  data::Load("GroupLensSmall.csv", dataset);
 
   // Generate list of locations for batch insert constructor for sparse
   // matrices.
@@ -86,7 +97,7 @@ BOOST_AUTO_TEST_CASE(SVDBatchMomentumTest)
   // Create the initial matrices.
   SpecificRandomInitialization sri(cleanedData.n_rows, 2, cleanedData.n_cols);
 
-  ValidationRMSETermination<sp_mat> vrt(cleanedData, 2000);
+  ValidationRMSETermination<sp_mat> vrt(cleanedData, 500);
   AMF<ValidationRMSETermination<sp_mat>,
       SpecificRandomInitialization,
       SVDBatchLearning> amf1(vrt, sri, SVDBatchLearning(0.0009, 0, 0, 0));
@@ -109,7 +120,7 @@ BOOST_AUTO_TEST_CASE(SVDBatchMomentumTest)
 BOOST_AUTO_TEST_CASE(SVDBatchRegularizationTest)
 {
   mat dataset;
-  data::Load("GroupLens100k.csv", dataset);
+  data::Load("GroupLensSmall.csv", dataset);
 
   // Generate list of locations for batch insert constructor for sparse
   // matrices.

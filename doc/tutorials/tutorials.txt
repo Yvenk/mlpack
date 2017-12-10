@@ -13,10 +13,13 @@ developers who want to use and contribute to mlpack but are not sure where to
 start.
 
  - \ref build
+ - \ref formatdoc
  - \ref matrices
  - \ref iodoc
  - \ref timer
  - \ref sample
+ - \ref cv
+ - \ref hpt
 
 @section method_tut Method-specific Tutorials
 
@@ -32,6 +35,9 @@ progress to complex, extensible uses.
  - \ref fmkstutorial
  - \ref emst_tutorial
  - \ref amftutorial
+ - \ref cftutorial
+ - \ref akfntutorial
+ - \ref cnetutorial
 
 @section policy_tut Policy Class Documentation
 

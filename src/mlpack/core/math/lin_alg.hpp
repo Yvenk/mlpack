@@ -3,9 +3,14 @@
  * @author Nishant Mehta
  *
  * Linear algebra utilities.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_MATH_LIN_ALG_HPP
-#define __MLPACK_CORE_MATH_LIN_ALG_HPP
+#ifndef MLPACK_CORE_MATH_LIN_ALG_HPP
+#define MLPACK_CORE_MATH_LIN_ALG_HPP
 
 #include <mlpack/prereqs.hpp>
 
@@ -119,10 +124,23 @@ inline size_t SvecIndex(size_t i, size_t j, size_t n);
  */
 void SymKronId(const arma::mat& A, arma::mat& op);
 
+/**
+ * Signum function.
+ * Return 1 if x>0; return 0 if x=0; return -1 if x<0.
+ * Return type are the same as input type.
+ *
+ * @param x Number of any type.
+ */
+template <typename T>
+T Sign(const T x)
+{
+    return (T(0) < x) - (x < T(0));
+}
+
 } // namespace math
 } // namespace mlpack
 
 // Partially include implementation
 #include "lin_alg_impl.hpp"
 
-#endif // __MLPACK_CORE_MATH_LIN_ALG_HPP
+#endif // MLPACK_CORE_MATH_LIN_ALG_HPP

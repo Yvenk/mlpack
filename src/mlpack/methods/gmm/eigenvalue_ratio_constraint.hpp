@@ -3,11 +3,16 @@
  * @author Ryan Curtin
  *
  * Constrain a covariance matrix to have a certain ratio of eigenvalues.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_GMM_EIGENVALUE_RATIO_CONSTRAINT_HPP
-#define __MLPACK_METHODS_GMM_EIGENVALUE_RATIO_CONSTRAINT_HPP
+#ifndef MLPACK_METHODS_GMM_EIGENVALUE_RATIO_CONSTRAINT_HPP
+#define MLPACK_METHODS_GMM_EIGENVALUE_RATIO_CONSTRAINT_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 
 namespace mlpack {
 namespace gmm {
@@ -73,11 +78,11 @@ class EigenvalueRatioConstraint
 
   //! Serialize the constraint.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */)
+  void serialize(Archive& ar, const unsigned int /* version */)
   {
     // Strip the const for the sake of loading/saving.  This is the only time it
     // is modified (other than the constructor).
-    ar & data::CreateNVP(const_cast<arma::vec&>(ratios), "ratios");
+    ar & BOOST_SERIALIZATION_NVP(const_cast<arma::vec&>(ratios));
   }
 
  private:

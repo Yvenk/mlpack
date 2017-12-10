@@ -8,7 +8,6 @@ set(SOURCES
   range_search_stat.hpp
   rs_model.hpp
   rs_model_impl.hpp
-  rs_model.cpp
 )
 
 # Add directory name to sources.
@@ -20,10 +19,5 @@ endforeach()
 # the parent scope).
 set(MLPACK_SRCS ${MLPACK_SRCS} ${DIR_SRCS} PARENT_SCOPE)
 
-add_executable(mlpack_range_search
-  range_search_main.cpp
-)
-target_link_libraries(mlpack_range_search
-  mlpack
-)
-install(TARGETS mlpack_range_search RUNTIME DESTINATION bin)
+add_cli_executable(range_search)
+#add_python_binding(range_search)

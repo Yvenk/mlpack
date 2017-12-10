@@ -1,6 +1,11 @@
 /**
  * @file kmeans_test.cpp
  * @author Ryan Curtin
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
 #include <mlpack/core.hpp>
 
@@ -11,12 +16,14 @@
 #include <mlpack/methods/kmeans/hamerly_kmeans.hpp>
 #include <mlpack/methods/kmeans/pelleg_moore_kmeans.hpp>
 #include <mlpack/methods/kmeans/dual_tree_kmeans.hpp>
+#include <mlpack/methods/kmeans/sample_initialization.hpp>
+#include <mlpack/methods/kmeans/random_partition.hpp>
 
 #include <mlpack/core/tree/cover_tree/cover_tree.hpp>
 #include <mlpack/methods/neighbor_search/neighbor_search.hpp>
 
 #include <boost/test/unit_test.hpp>
-#include "old_boost_test_definitions.hpp"
+#include "test_tools.hpp"
 
 using namespace mlpack;
 using namespace mlpack::kmeans;
@@ -63,7 +70,9 @@ arma::mat kMeansData("  0.0   0.0;" // Class 1.
  */
 BOOST_AUTO_TEST_CASE(KMeansSimpleTest)
 {
-  KMeans<> kmeans;
+  // This test was originally written to use RandomPartition, and is left that
+  // way because RandomPartition gives better initializations here.
+  KMeans<EuclideanDistance, RandomPartition> kmeans;
 
   arma::Row<size_t> assignments;
   kmeans.Cluster((arma::mat) trans(kMeansData), 3, assignments);
@@ -386,7 +395,6 @@ BOOST_AUTO_TEST_CASE(RefinedStartTest)
   // Our dataset will be five Gaussians of largely varying numbers of points and
   // we expect that the refined starting policy should return good guesses at
   // what these Gaussians are.
-  math::RandomSeed(std::time(NULL));
   arma::mat data(3, 3000);
   data.randn();
 
@@ -445,9 +453,6 @@ BOOST_AUTO_TEST_CASE(RefinedStartTest)
 }
 
 #ifdef ARMA_HAS_SPMAT
-// Can't do this test on Armadillo 3.4; var(SpBase) is not implemented.
-#if !((ARMA_VERSION_MAJOR == 3) && (ARMA_VERSION_MINOR == 4))
-
 /**
  * Make sure sparse k-means works okay.
  */
@@ -492,7 +497,6 @@ BOOST_AUTO_TEST_CASE(SparseKMeansTest)
   BOOST_REQUIRE_EQUAL(assignments[11], clusterTwo);
 }
 
-#endif // Exclude Armadillo 3.4.
 #endif // ARMA_HAS_SPMAT
 
 BOOST_AUTO_TEST_CASE(ElkanTest)
@@ -604,7 +608,7 @@ BOOST_AUTO_TEST_CASE(DTNNTest)
 
   for (size_t t = 0; t < trials; ++t)
   {
-    arma::mat dataset(10, 1000);
+    arma::mat dataset(10, 300);
     dataset.randu();
 
     const size_t k = 5 * (t + 1);
@@ -636,7 +640,7 @@ BOOST_AUTO_TEST_CASE(DTNNCoverTreeTest)
 
   for (size_t t = 0; t < trials; ++t)
   {
-    arma::mat dataset(10, 1000);
+    arma::mat dataset(10, 300);
     dataset.randu();
 
     const size_t k = 5;
@@ -659,6 +663,40 @@ BOOST_AUTO_TEST_CASE(DTNNCoverTreeTest)
 
     for (size_t i = 0; i < centroids.n_elem; ++i)
       BOOST_REQUIRE_CLOSE(naiveCentroids[i], dtnnCentroids[i], 1e-5);
+  }
+}
+
+/**
+ * Make sure that the sample initialization strategy successfully samples points
+ * from the dataset.
+ */
+BOOST_AUTO_TEST_CASE(SampleInitializationTest)
+{
+  arma::mat dataset = arma::randu<arma::mat>(5, 100);
+  const size_t clusters = 10;
+  arma::mat centroids;
+
+  SampleInitialization::Cluster(dataset, clusters, centroids);
+
+  // Check that the size of the matrix is correct.
+  BOOST_REQUIRE_EQUAL(centroids.n_cols, 10);
+  BOOST_REQUIRE_EQUAL(centroids.n_rows, 5);
+
+  // Check that each entry in the matrix is some sample from the dataset.
+  for (size_t i = 0; i < clusters; ++i)
+  {
+    // If the loop successfully terminates, j will be equal to dataset.n_cols.
+    // If not then we have found a match.
+    size_t j;
+    for (j = 0; j < dataset.n_cols; ++j)
+    {
+      const double distance = metric::EuclideanDistance::Evaluate(
+          centroids.col(i), dataset.col(j));
+      if (distance < 1e-10)
+        break;
+    }
+
+    BOOST_REQUIRE_LT(j, dataset.n_cols);
   }
 }
 

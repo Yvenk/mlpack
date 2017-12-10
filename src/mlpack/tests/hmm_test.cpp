@@ -2,13 +2,18 @@
  * @file hmm_test.cpp
  *
  * Test file for HMMs.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
 #include <mlpack/core.hpp>
 #include <mlpack/methods/hmm/hmm.hpp>
 #include <mlpack/methods/gmm/gmm.hpp>
 
 #include <boost/test/unit_test.hpp>
-#include "old_boost_test_definitions.hpp"
+#include "test_tools.hpp"
 
 using namespace mlpack;
 using namespace mlpack::hmm;
@@ -36,8 +41,8 @@ BOOST_AUTO_TEST_CASE(SimpleDiscreteHMMTestViterbi)
   arma::vec initial("1 0"); // Default MATLAB initial states.
   arma::mat transition("0.7 0.3; 0.3 0.7");
   std::vector<DiscreteDistribution> emission(2);
-  emission[0] = DiscreteDistribution("0.9 0.1");
-  emission[1] = DiscreteDistribution("0.2 0.8");
+  emission[0] = DiscreteDistribution(std::vector<arma::vec>{"0.9 0.1"});
+  emission[1] = DiscreteDistribution(std::vector<arma::vec>{"0.2 0.8"});
 
   HMM<DiscreteDistribution> hmm(initial, transition, emission);
 
@@ -73,9 +78,12 @@ BOOST_AUTO_TEST_CASE(BorodovskyHMMTestViterbi)
                        "0.5 0.5 0.6");
   // Four emission states: A, C, G, T.  Start state doesn't emit...
   std::vector<DiscreteDistribution> emission(3);
-  emission[0] = DiscreteDistribution("0.25 0.25 0.25 0.25");
-  emission[1] = DiscreteDistribution("0.20 0.30 0.30 0.20");
-  emission[2] = DiscreteDistribution("0.30 0.20 0.20 0.30");
+  emission[0] = DiscreteDistribution(
+      std::vector<arma::vec>{"0.25 0.25 0.25 0.25"});
+  emission[1] = DiscreteDistribution(
+      std::vector<arma::vec>{"0.20 0.30 0.30 0.20"});
+  emission[2] = DiscreteDistribution(
+      std::vector<arma::vec>{"0.30 0.20 0.20 0.30"});
 
   HMM<DiscreteDistribution> hmm(initial, transition, emission);
 
@@ -113,8 +121,8 @@ BOOST_AUTO_TEST_CASE(ForwardBackwardTwoState)
   arma::vec initial("0.1 0.4");
   arma::mat transition("0.1 0.9; 0.4 0.6");
   std::vector<DiscreteDistribution> emis(2);
-  emis[0] = DiscreteDistribution("0.85 0.15 0.00 0.00");
-  emis[1] = DiscreteDistribution("0.00 0.00 0.50 0.50");
+  emis[0] = DiscreteDistribution(std::vector<arma::vec>{"0.85 0.15 0.00 0.00"});
+  emis[1] = DiscreteDistribution(std::vector<arma::vec>{"0.00 0.00 0.50 0.50"});
 
   HMM<DiscreteDistribution> hmm(initial, transition, emis);
 
@@ -236,6 +244,7 @@ BOOST_AUTO_TEST_CASE(SimpleBaumWelchDiscreteHMM_2)
   std::vector<arma::mat> observations;
   size_t obsNum = 250; // Number of observations.
   size_t obsLen = 500; // Number of elements in each observation.
+  size_t stateZeroStarts = 0; // Number of times we start in state 0.
   for (size_t i = 0; i < obsNum; i++)
   {
     arma::mat observation(1, obsLen);
@@ -249,9 +258,15 @@ BOOST_AUTO_TEST_CASE(SimpleBaumWelchDiscreteHMM_2)
       double r = math::Random();
 
       if (r <= 0.5)
+      {
+        if (obs == 0)
+          ++stateZeroStarts;
         state = 0;
+      }
       else
+      {
         state = 1;
+      }
 
       // Now set the observation.
       r = math::Random();
@@ -281,9 +296,12 @@ BOOST_AUTO_TEST_CASE(SimpleBaumWelchDiscreteHMM_2)
 
   hmm.Train(observations);
 
+  // Calculate true probability of class 0 at the start.
+  double prob = double(stateZeroStarts) / observations.size();
+
   // Only require 2.5% tolerance, because this is a little fuzzier.
-  BOOST_REQUIRE_CLOSE(hmm.Initial()[0], 0.5, 2.5);
-  BOOST_REQUIRE_CLOSE(hmm.Initial()[1], 0.5, 2.5);
+  BOOST_REQUIRE_CLOSE(hmm.Initial()[0], prob, 2.5);
+  BOOST_REQUIRE_CLOSE(hmm.Initial()[1], 1.0 - prob, 2.5);
 
   BOOST_REQUIRE_CLOSE(hmm.Transition()(0, 0), 0.5, 2.5);
   BOOST_REQUIRE_CLOSE(hmm.Transition()(1, 0), 0.5, 2.5);
@@ -367,7 +385,7 @@ BOOST_AUTO_TEST_CASE(DiscreteHMMLabeledTrainTest)
 
   // Make sure the initial weights are fine.  They should be equal (or close).
   for (size_t row = 0; row < hmm.Transition().n_rows; ++row)
-    BOOST_REQUIRE_SMALL(hmm.Initial()[row] - 1.0 / 3.0, 0.075);
+    BOOST_REQUIRE_SMALL(hmm.Initial()[row] - 1.0 / 3.0, 0.1);
 
   // We can't use % tolerance here because percent error increases as the actual
   // value gets very small.  So, instead, we just ensure that every value is no
@@ -385,7 +403,7 @@ BOOST_AUTO_TEST_CASE(DiscreteHMMLabeledTrainTest)
       arma::vec obs(1);
       obs[0] = row;
       BOOST_REQUIRE_SMALL(hmm.Emission()[col].Probability(obs) -
-          emission[col].Probability(obs), 0.04);
+          emission[col].Probability(obs), 0.07);
     }
   }
 }
@@ -397,9 +415,10 @@ BOOST_AUTO_TEST_CASE(DiscreteHMMLabeledTrainTest)
 BOOST_AUTO_TEST_CASE(DiscreteHMMSimpleGenerateTest)
 {
   // Very simple HMM.  4 emissions with equal probability and 2 states with
-  // equal probability.  The default transition and emission matrices satisfy
-  // this property.
+  // equal probability.
   HMM<DiscreteDistribution> hmm(2, DiscreteDistribution(4));
+  hmm.Initial() = arma::ones<arma::vec>(2) / 2.0;
+  hmm.Transition() = arma::ones<arma::mat>(2, 2) / 2.0;
 
   // Now generate a really, really long sequence.
   arma::mat dataSeq;
@@ -986,7 +1005,7 @@ BOOST_AUTO_TEST_CASE(GMMHMMLoadSaveTest)
   // Create a GMM HMM, save it, and load it.
   HMM<GMM> hmm(3, GMM(4, 3));
 
-  for(size_t j = 0; j < hmm.Emission().size(); ++j)
+  for (size_t j = 0; j < hmm.Emission().size(); ++j)
   {
     hmm.Emission()[j].Weights().randu();
     for (size_t i = 0; i < hmm.Emission()[j].Gaussians(); ++i)
@@ -1005,7 +1024,7 @@ BOOST_AUTO_TEST_CASE(GMMHMMLoadSaveTest)
   {
     std::ofstream ofs("test-hmm-save.xml");
     boost::archive::xml_oarchive ar(ofs);
-    ar << data::CreateNVP(hmm, "hmm");
+    ar << BOOST_SERIALIZATION_NVP(hmm);
   }
 
   // Load the HMM.
@@ -1013,7 +1032,7 @@ BOOST_AUTO_TEST_CASE(GMMHMMLoadSaveTest)
   {
     std::ifstream ifs("test-hmm-save.xml");
     boost::archive::xml_iarchive ar(ifs);
-    ar >> data::CreateNVP(hmm2, "hmm");
+    ar >> BOOST_SERIALIZATION_NVP(hmm2);
   }
 
   // Remove clutter.
@@ -1039,7 +1058,7 @@ BOOST_AUTO_TEST_CASE(GMMHMMLoadSaveTest)
 
         for (size_t k = 0; k < hmm.Emission()[j].Dimensionality(); ++k)
         {
-          BOOST_REQUIRE_CLOSE(hmm.Emission()[j].Component(i).Covariance()(l,k),
+          BOOST_REQUIRE_CLOSE(hmm.Emission()[j].Component(i).Covariance()(l, k),
               hmm2.Emission()[j].Component(i).Covariance()(l, k), 1e-3);
         }
       }
@@ -1056,7 +1075,7 @@ BOOST_AUTO_TEST_CASE(GaussianHMMLoadSaveTest)
   HMM<GaussianDistribution> hmm(3, GaussianDistribution(2));
 
 
-  for(size_t j = 0; j < hmm.Emission().size(); ++j)
+  for (size_t j = 0; j < hmm.Emission().size(); ++j)
   {
     hmm.Emission()[j].Mean().randu();
     arma::mat covariance = arma::randu<arma::mat>(
@@ -1071,7 +1090,7 @@ BOOST_AUTO_TEST_CASE(GaussianHMMLoadSaveTest)
   {
     std::ofstream ofs("test-hmm-save.xml");
     boost::archive::xml_oarchive ar(ofs);
-    ar << data::CreateNVP(hmm, "hmm");
+    ar << BOOST_SERIALIZATION_NVP(hmm);
   }
 
   // Load the HMM.
@@ -1079,7 +1098,7 @@ BOOST_AUTO_TEST_CASE(GaussianHMMLoadSaveTest)
   {
     std::ifstream ifs("test-hmm-save.xml");
     boost::archive::xml_iarchive ar(ifs);
-    ar >> data::CreateNVP(hmm2, "hmm");
+    ar >> BOOST_SERIALIZATION_NVP(hmm2);
   }
 
   // Remove clutter.
@@ -1096,7 +1115,7 @@ BOOST_AUTO_TEST_CASE(GaussianHMMLoadSaveTest)
           hmm2.Emission()[j].Mean()[i], 1e-3);
       for (size_t k = 0; k < hmm.Emission()[j].Dimensionality(); ++k)
       {
-        BOOST_REQUIRE_CLOSE(hmm.Emission()[j].Covariance()(i,k),
+        BOOST_REQUIRE_CLOSE(hmm.Emission()[j].Covariance()(i, k),
             hmm2.Emission()[j].Covariance()(i, k), 1e-3);
       }
     }
@@ -1124,7 +1143,7 @@ BOOST_AUTO_TEST_CASE(DiscreteHMMLoadSaveTest)
   HMM<DiscreteDistribution> hmm(3, DiscreteDistribution(3));
 
 
-  for(size_t j = 0; j < hmm.Emission().size(); ++j)
+  for (size_t j = 0; j < hmm.Emission().size(); ++j)
   {
     hmm.Emission()[j].Probabilities() = arma::randu<arma::vec>(3);
     hmm.Emission()[j].Probabilities() /= accu(emission[j].Probabilities());
@@ -1134,7 +1153,7 @@ BOOST_AUTO_TEST_CASE(DiscreteHMMLoadSaveTest)
   {
     std::ofstream ofs("test-hmm-save.xml");
     boost::archive::xml_oarchive ar(ofs);
-    ar << data::CreateNVP(hmm, "hmm");
+    ar << BOOST_SERIALIZATION_NVP(hmm);
   }
 
   // Load the HMM.
@@ -1142,7 +1161,7 @@ BOOST_AUTO_TEST_CASE(DiscreteHMMLoadSaveTest)
   {
     std::ifstream ifs("test-hmm-save.xml");
     boost::archive::xml_iarchive ar(ifs);
-    ar >> data::CreateNVP(hmm2, "hmm");
+    ar >> BOOST_SERIALIZATION_NVP(hmm2);
   }
 
   // Remove clutter.

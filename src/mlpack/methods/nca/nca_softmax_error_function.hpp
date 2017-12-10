@@ -4,11 +4,17 @@
  *
  * Implementation of the stochastic neighbor assignment probability error
  * function (the "softmax error").
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_NCA_NCA_SOFTMAX_ERROR_FUNCTION_HPP
-#define __MLPACK_METHODS_NCA_NCA_SOFTMAX_ERROR_FUNCTION_HPP
+#ifndef MLPACK_METHODS_NCA_NCA_SOFTMAX_ERROR_FUNCTION_HPP
+#define MLPACK_METHODS_NCA_NCA_SOFTMAX_ERROR_FUNCTION_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
+#include <mlpack/core/metrics/lmetric.hpp>
 
 namespace mlpack {
 namespace nca {
@@ -52,6 +58,11 @@ class SoftmaxErrorFunction
                        MetricType metric = MetricType());
 
   /**
+   * Shuffle the dataset.
+   */
+  void Shuffle();
+
+  /**
    * Evaluate the softmax function for the given covariance matrix.  This is the
    * non-separable implementation, where the objective function is not
    * decomposed into the sum of several objective functions.
@@ -62,15 +73,19 @@ class SoftmaxErrorFunction
 
   /**
    * Evaluate the softmax objective function for the given covariance matrix on
-   * only one point of the dataset.  This is the separable implementation, where
-   * the objective function is decomposed into the sum of many objective
+   * the given batch size from a given inital point of the dataset.
+   * This is the separable implementation, where the objective 
+   * function is decomposed into the sum of many objective
    * functions, and here, only one of those constituent objective functions is
    * returned.
    *
    * @param covariance Covariance matrix of Mahalanobis distance.
-   * @param i Index of point to use for objective function.
+   * @param begin Index of the initial point to use for objective function.
+   * @param batchSize Number of points to use for objective function.
    */
-  double Evaluate(const arma::mat& covariance, const size_t i);
+  double Evaluate(const arma::mat& covariance,
+                  const size_t begin,
+                  const size_t batchSize = 1);
 
   /**
    * Evaluate the gradient of the softmax function for the given covariance
@@ -84,18 +99,24 @@ class SoftmaxErrorFunction
 
   /**
    * Evaluate the gradient of the softmax function for the given covariance
-   * matrix on only one point of the dataset.  This is the separable
-   * implementation, where the objective function is decomposed into the sum of
-   * many objective functions, and here, only one of those constituent objective
-   * functions is returned.
+   * matrix on the given batch size, from a given initial point of the dataset.
+   * This is the separable implementation, where the objective function is
+   * decomposed into the sum of many objective functions, and here,
+   * only one of those constituent objective functions is returned.
+   * The type of the gradient parameter is a template
+   * argument to allow the computation of a sparse gradient.
    *
+   * @tparam GradType The type of the gradient out-param.
    * @param covariance Covariance matrix of Mahalanobis distance.
-   * @param i Index of point to use for objective function.
+   * @param begin Index of the initial point to use for objective function.
+   * @param batchSize Number of points to use for objective function.
    * @param gradient Matrix to store the calculated gradient in.
    */
+  template <typename GradType>
   void Gradient(const arma::mat& covariance,
-                const size_t i,
-                arma::mat& gradient);
+                const size_t begin,
+                GradType& gradient,
+                const size_t batchSize = 1);
 
   /**
    * Get the initial point.
@@ -109,10 +130,11 @@ class SoftmaxErrorFunction
   size_t NumFunctions() const { return dataset.n_cols; }
 
  private:
-  //! The dataset.
-  const arma::mat& dataset;
-  //! Labels for each point in the dataset.
-  const arma::Row<size_t>& labels;
+  //! The dataset.  This is an alias until Shuffle() is called.
+  arma::mat dataset;
+  //! Labels for each point in the dataset.  This is an alias until Shuffle() is
+  //! called.
+  arma::Row<size_t> labels;
 
   //! The instantiated metric.
   MetricType metric;

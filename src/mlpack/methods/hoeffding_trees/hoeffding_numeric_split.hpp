@@ -5,11 +5,16 @@
  * A numeric feature split for Hoeffding trees.  This is a very simple
  * implementation based on a minor note in the paper "Mining High-Speed Data
  * Streams" by Pedro Domingos and Geoff Hulten.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_HOEFFDING_TREES_HOEFFDING_NUMERIC_SPLIT_HPP
-#define __MLPACK_METHODS_HOEFFDING_TREES_HOEFFDING_NUMERIC_SPLIT_HPP
+#ifndef MLPACK_METHODS_HOEFFDING_TREES_HOEFFDING_NUMERIC_SPLIT_HPP
+#define MLPACK_METHODS_HOEFFDING_TREES_HOEFFDING_NUMERIC_SPLIT_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 #include "numeric_split_info.hpp"
 
 namespace mlpack {
@@ -60,7 +65,7 @@ class HoeffdingNumericSplit
    * @param observationsBeforeBinning Number of points to see before binning is
    *      performed.
    */
-  HoeffdingNumericSplit(const size_t numClasses,
+  HoeffdingNumericSplit(const size_t numClasses = 0,
                         const size_t bins = 10,
                         const size_t observationsBeforeBinning = 100);
 
@@ -116,7 +121,7 @@ class HoeffdingNumericSplit
 
   //! Serialize the object.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */);
+  void serialize(Archive& ar, const unsigned int /* version */);
 
  private:
   //! Before binning, this holds the points we have seen so far.

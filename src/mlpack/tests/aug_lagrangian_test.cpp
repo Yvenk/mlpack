@@ -4,13 +4,17 @@
  *
  * Test of the AugmentedLagrangian class using the test functions defined in
  * aug_lagrangian_test_functions.hpp.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-
 #include <mlpack/core.hpp>
 #include <mlpack/core/optimizers/aug_lagrangian/aug_lagrangian.hpp>
 #include <mlpack/core/optimizers/aug_lagrangian/aug_lagrangian_test_functions.hpp>
 #include <boost/test/unit_test.hpp>
-#include "old_boost_test_definitions.hpp"
+#include "test_tools.hpp"
 
 using namespace mlpack;
 using namespace mlpack::optimization;
@@ -25,11 +29,11 @@ BOOST_AUTO_TEST_CASE(AugLagrangianTestFunctionTest)
 {
   // The choice of 10 memory slots is arbitrary.
   AugLagrangianTestFunction f;
-  AugLagrangian<AugLagrangianTestFunction> aug(f);
+  AugLagrangian aug;
 
   arma::vec coords = f.GetInitialPoint();
 
-  if (!aug.Optimize(coords, 0))
+  if (!aug.Optimize(f, coords, 0))
     BOOST_FAIL("Optimization reported failure.");
 
   double finalValue = f.Evaluate(coords);
@@ -45,11 +49,11 @@ BOOST_AUTO_TEST_CASE(AugLagrangianTestFunctionTest)
 BOOST_AUTO_TEST_CASE(GockenbachFunctionTest)
 {
   GockenbachFunction f;
-  AugLagrangian<GockenbachFunction> aug(f);
+  AugLagrangian aug;
 
   arma::vec coords = f.GetInitialPoint();
 
-  if (!aug.Optimize(coords, 0))
+  if (!aug.Optimize(f, coords, 0))
     BOOST_FAIL("Optimization reported failure.");
 
   double finalValue = f.Evaluate(coords);

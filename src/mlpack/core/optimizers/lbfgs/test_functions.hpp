@@ -9,11 +9,16 @@
  *  Jorge J. Moré, Burton S. Garbow, and Kenneth E. Hillstrom. 1981.
  *  ACM Trans. Math. Softw. 7, 1 (March 1981), 17-41.
  *  http://portal.acm.org/citation.cfm?id=355934.355936
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_OPTIMIZERS_LBFGS_TEST_FUNCTIONS_HPP
-#define __MLPACK_CORE_OPTIMIZERS_LBFGS_TEST_FUNCTIONS_HPP
+#ifndef MLPACK_CORE_OPTIMIZERS_LBFGS_TEST_FUNCTIONS_HPP
+#define MLPACK_CORE_OPTIMIZERS_LBFGS_TEST_FUNCTIONS_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 
 // To fulfill the template policy class 'FunctionType', we must implement
 // the following:
@@ -115,20 +120,30 @@ class GeneralizedRosenbrockFunction
    */
   GeneralizedRosenbrockFunction(int n);
 
+  void Shuffle();
+
   double Evaluate(const arma::mat& coordinates) const;
   void Gradient(const arma::mat& coordinates, arma::mat& gradient) const;
 
   size_t NumFunctions() const { return n - 1; }
-  double Evaluate(const arma::mat& coordinates, const size_t i) const;
+  double Evaluate(const arma::mat& coordinates,
+                  const size_t i,
+                  const size_t batchSize = 1) const;
   void Gradient(const arma::mat& coordinates,
                 const size_t i,
-                arma::mat& gradient) const;
+                arma::mat& gradient,
+                const size_t batchSize = 1) const;
+
+  void Gradient(const arma::mat& coordinates,
+                const size_t i,
+                arma::sp_mat& gradient) const;
 
   const arma::mat& GetInitialPoint() const;
 
  private:
   arma::mat initialPoint;
   int n; // Dimensionality
+  arma::Row<size_t> visitationOrder; // For shuffling.
 };
 
 /**
@@ -156,4 +171,4 @@ class RosenbrockWoodFunction
 } // namespace optimization
 } // namespace mlpack
 
-#endif // __MLPACK_CORE_OPTIMIZERS_LBFGS_TEST_FUNCTIONS_HPP
+#endif // MLPACK_CORE_OPTIMIZERS_LBFGS_TEST_FUNCTIONS_HPP

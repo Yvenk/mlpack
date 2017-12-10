@@ -12,6 +12,8 @@ set(SOURCES
   hoeffding_numeric_split_impl.hpp
   hoeffding_tree.hpp
   hoeffding_tree_impl.hpp
+  hoeffding_tree_model.hpp
+  hoeffding_tree_model.cpp
   information_gain.hpp
   numeric_split_info.hpp
   typedef.hpp
@@ -26,10 +28,5 @@ endforeach()
 # the parent scope).
 set(MLPACK_SRCS ${MLPACK_SRCS} ${DIR_SRCS} PARENT_SCOPE)
 
-add_executable(mlpack_hoeffding_tree
-  hoeffding_tree_main.cpp
-)
-target_link_libraries(mlpack_hoeffding_tree
-  mlpack
-)
-install(TARGETS mlpack_hoeffding_tree RUNTIME DESTINATION bin)
+add_cli_executable(hoeffding_tree)
+add_python_binding(hoeffding_tree)

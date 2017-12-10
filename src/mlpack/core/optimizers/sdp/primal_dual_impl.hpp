@@ -20,9 +20,14 @@
  * Also note the current implementation assumes the SDP problem has a strictly
  * feasible primal/dual point (and therefore the duality gap is zero), and
  * that the constraint matrices are linearly independent.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_OPTIMIZERS_SDP_PRIMAL_DUAL_IMPL_HPP
-#define __MLPACK_CORE_OPTIMIZERS_SDP_PRIMAL_DUAL_IMPL_HPP
+#ifndef MLPACK_CORE_OPTIMIZERS_SDP_PRIMAL_DUAL_IMPL_HPP
+#define MLPACK_CORE_OPTIMIZERS_SDP_PRIMAL_DUAL_IMPL_HPP
 
 #include "primal_dual.hpp"
 
@@ -41,9 +46,7 @@ PrimalDualSolver<SDPType>::PrimalDualSolver(const SDPType& sdp)
     primalInfeasTol(1e-7),
     dualInfeasTol(1e-7),
     maxIterations(1000)
-{
-
-}
+{ /* Nothing to do. */ }
 
 template <typename SDPType>
 PrimalDualSolver<SDPType>::PrimalDualSolver(const SDPType& sdp,
@@ -108,13 +111,7 @@ PrimalDualSolver<SDPType>::PrimalDualSolver(const SDPType& sdp,
 static inline double
 Alpha(const arma::mat& A, const arma::mat& dA, double tau)
 {
-  // On Armadillo < 4.500, the "lower" option isn't available.
-#if (ARMA_VERSION_MAJOR < 4) || \
-    ((ARMA_VERSION_MAJOR == 4) && (ARMA_VERSION_MINOR < 500))
-  const arma::mat L = arma::chol(A).t(); // This is less efficient.
-#else
   const arma::mat L = arma::chol(A, "lower");
-#endif
   const arma::mat Linv = arma::inv(arma::trimatl(L));
   // TODO(stephentu): We only want the top eigenvalue, we should
   // be able to do better than full eigen-decomposition.

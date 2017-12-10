@@ -3,10 +3,13 @@
  * @author Neil Slagle
  *
  * Implementation of non-template Epanechnikov kernels.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
 #include "epanechnikov_kernel.hpp"
-
-#include <boost/math/special_functions/gamma.hpp>
 
 using namespace mlpack;
 using namespace mlpack::kernel;
@@ -20,7 +23,7 @@ double EpanechnikovKernel::Normalizer(const size_t dimension)
 {
   return 2.0 * pow(bandwidth, (double) dimension) *
       std::pow(M_PI, dimension / 2.0) /
-      (boost::math::tgamma(dimension / 2.0 + 1.0) * (dimension + 2.0));
+      (std::tgamma(dimension / 2.0 + 1.0) * (dimension + 2.0));
 }
 
 /**
@@ -32,15 +35,21 @@ double EpanechnikovKernel::Evaluate(const double distance) const
 }
 
 /**
- * Evaluate gradient of the kernel not for two points 
+ * Evaluate gradient of the kernel not for two points
  * but for a numerical value.
  */
-double EpanechnikovKernel::Gradient(const double distance) const {
-  if (std::abs(bandwidth) < std::abs(distance)) {
+double EpanechnikovKernel::Gradient(const double distance) const
+{
+  if (std::abs(bandwidth) < std::abs(distance))
+  {
     return 0;
-  } else if (std::abs(bandwidth > std::abs(distance))) {
+  }
+  else if (std::abs(bandwidth) > std::abs(distance))
+  {
     return -2 * inverseBandwidthSquared * distance;
-  } else {
+  }
+  else
+  {
     // The gradient doesn't exist.
     return arma::datum::nan;
   }
@@ -51,14 +60,20 @@ double EpanechnikovKernel::Gradient(const double distance) const {
  * but for a numerical value.
  */
 double EpanechnikovKernel::GradientForSquaredDistance(const double
-                                                  distanceSquared) const {
+                                                  distanceSquared) const
+{
   double bandwidthSquared = bandwidth * bandwidth;
-  if (distanceSquared < bandwidthSquared) {
+  if (distanceSquared < bandwidthSquared)
+  {
     return -1 * inverseBandwidthSquared;
-  } else if (distanceSquared > bandwidthSquared &&
-             distanceSquared >= 0) {
+  }
+  else if (distanceSquared > bandwidthSquared &&
+             distanceSquared >= 0)
+  {
     return  0;
-  } else {
+  }
+  else
+  {
     // The gradient doesn't exist.
     return arma::datum::nan;
   }

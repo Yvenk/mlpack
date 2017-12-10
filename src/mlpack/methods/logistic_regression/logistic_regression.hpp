@@ -1,14 +1,20 @@
 /**
  * @file logistic_regression.hpp
  * @author Sumedh Ghaisas
+ * @author Arun Reddy
  *
  * The LogisticRegression class, which implements logistic regression.  This
  * implements supports L2-regularization.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_LOGISTIC_REGRESSION_LOGISTIC_REGRESSION_HPP
-#define __MLPACK_METHODS_LOGISTIC_REGRESSION_LOGISTIC_REGRESSION_HPP
+#ifndef MLPACK_METHODS_LOGISTIC_REGRESSION_LOGISTIC_REGRESSION_HPP
+#define MLPACK_METHODS_LOGISTIC_REGRESSION_LOGISTIC_REGRESSION_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 #include <mlpack/core/optimizers/lbfgs/lbfgs.hpp>
 
 #include "logistic_regression_function.hpp"
@@ -22,6 +28,10 @@ namespace regression {
  * The class supports different observation types via the MatType template
  * parameter; for instance, logistic regression can be performed on sparse
  * datasets by specifying arma::sp_mat as the MatType parameter.
+ *
+ * LogisticRegression can be used for general classification tasks, but the
+ * class is restricted to support only two classes.  For multiclass logistic
+ * regression, see mlpack::regression::SoftmaxRegression.
  *
  * @tparam MatType Type of data matrix.
  */
@@ -66,7 +76,7 @@ class LogisticRegression
    */
   LogisticRegression(const MatType& predictors,
                      const arma::Row<size_t>& responses,
-                     const arma::vec& initialPoint,
+                     const arma::rowvec& initialPoint,
                      const double lambda = 0);
 
   /**
@@ -79,7 +89,7 @@ class LogisticRegression
    * @param dimensionality Dimensionality of the data.
    * @param lambda L2-regularization parameter.
    */
-  LogisticRegression(const size_t dimensionality,
+  LogisticRegression(const size_t dimensionality = 0,
                      const double lambda = 0);
 
   /**
@@ -87,15 +97,21 @@ class LogisticRegression
    * data.  This will train the model.  This overload takes an already
    * instantiated optimizer (which holds the LogisticRegressionFunction error
    * function, which must also be instantiated), so that the optimizer can be
-   * configured before the training is run by this constructor.  The predictors
-   * and responses and initial point are all taken from the error function
-   * contained in the optimizer.
+   * configured before the training is run by this constructor.  The update
+   * policy of the optimizer can be set through the policy argument.  The
+   * predictors and responses and initial point are all taken from the error
+   * function contained in the optimizer.
    *
+   * @param predictors Input training variables.
+   * @param responses Outputs results from input training variables.
    * @param optimizer Instantiated optimizer with instantiated error function.
+   * @param lambda L2-regularization parameter.
    */
-  template<template<typename> class OptimizerType>
-  LogisticRegression(
-      OptimizerType<LogisticRegressionFunction<MatType>>& optimizer);
+  template<typename OptimizerType>
+  LogisticRegression(const MatType& predictors,
+                     const arma::Row<size_t>& responses,
+                     OptimizerType& optimizer,
+                     const double lambda);
 
   /**
    * Train the LogisticRegression model on the given input data.  By default,
@@ -110,9 +126,7 @@ class LogisticRegression
    * @param predictors Input training variables.
    * @param responses Outputs results from input training variables.
    */
-  template<
-      template<typename> class OptimizerType = mlpack::optimization::L_BFGS
-  >
+  template<typename OptimizerType = mlpack::optimization::L_BFGS>
   void Train(const MatType& predictors,
              const arma::Row<size_t>& responses);
 
@@ -128,17 +142,19 @@ class LogisticRegression
    * optimizer.Function().GetInitialPoint() to the current parameters vector,
    * accessible via Parameters().
    *
+   * @param predictors Input training variables.
+   * @param responses Outputs results from input training variables.
    * @param optimizer Instantiated optimizer with instantiated error function.
    */
-  template<
-      template<typename> class OptimizerType = mlpack::optimization::L_BFGS
-  >
-  void Train(OptimizerType<LogisticRegressionFunction<MatType>>& optimizer);
+  template<typename OptimizerType>
+  void Train(const MatType& predictors,
+             const arma::Row<size_t>& responses,
+             OptimizerType& optimizer);
 
   //! Return the parameters (the b vector).
-  const arma::vec& Parameters() const { return parameters; }
+  const arma::rowvec& Parameters() const { return parameters; }
   //! Modify the parameters (the b vector).
-  arma::vec& Parameters() { return parameters; }
+  arma::rowvec& Parameters() { return parameters; }
 
   //! Return the lambda value for L2-regularization.
   const double& Lambda() const { return lambda; }
@@ -152,13 +168,54 @@ class LogisticRegression
    * the decision boundary, the response is taken to be 1; otherwise, it is 0.
    * By default the decision boundary is 0.5.
    *
+   * This method is deprecated---you should use Classify() instead.
+   *
    * @param predictors Input predictors.
    * @param responses Vector to put output predictions of responses into.
    * @param decisionBoundary Decision boundary (default 0.5).
    */
-  void Predict(const MatType& predictors,
-               arma::Row<size_t>& responses,
-               const double decisionBoundary = 0.5) const;
+  mlpack_deprecated void Predict(const MatType& predictors,
+                                 arma::Row<size_t>& responses,
+                                 const double decisionBoundary = 0.5) const;
+
+  /**
+   * Classify the given point.  The predicted label is returned.  Optionally,
+   * specify the decision boundary; logistic regression returns a value between
+   * 0 and 1.  If the value is greater than the decision boundary, the response
+   * is taken to be 1; otherwise, it is 0.  By default the decision boundary is
+   * 0.5.
+   *
+   * @param point Point to classify.
+   * @param decisionBoundary Decision boundary (default 0.5).
+   * @return Predicted label of point.
+   */
+  template<typename VecType>
+  size_t Classify(const VecType& point,
+                  const double decisionBoundary = 0.5) const;
+
+  /**
+   * Classify the given points, returning the predicted labels for each point.
+   * Optionally, specify the decision boundary; logistic regression returns a
+   * value between 0 and 1.  If the value is greater than the decision boundary,
+   * the response is taken to be 1; otherwise, it is 0.  By default the decision
+   * boundary is 0.5.
+   *
+   * @param dataset Set of points to classify.
+   * @param labels Predicted labels for each point.
+   * @param decisionBoundary Decision boundary (default 0.5).
+   */
+  void Classify(const MatType& dataset,
+                arma::Row<size_t>& labels,
+                const double decisionBoundary = 0.5) const;
+
+  /**
+   * Classify the given points, returning class probabilities for each point.
+   *
+   * @param dataset Set of points to classify.
+   * @param probabilities Class probabilities for each point (output).
+   */
+  void Classify(const MatType& dataset,
+                arma::mat& probabilities) const;
 
   /**
    * Compute the accuracy of the model on the given predictors and responses,
@@ -191,11 +248,11 @@ class LogisticRegression
 
   //! Serialize the model.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */);
+  void serialize(Archive& ar, const unsigned int /* version */);
 
  private:
   //! Vector of trained parameters (size: dimensionality plus one).
-  arma::vec parameters;
+  arma::rowvec parameters;
   //! L2-regularization penalty parameter.
   double lambda;
 };
@@ -206,4 +263,4 @@ class LogisticRegression
 // Include implementation.
 #include "logistic_regression_impl.hpp"
 
-#endif // __MLPACK_METHODS_LOGISTIC_REGRESSION_LOGISTIC_REGRESSION_HPP
+#endif // MLPACK_METHODS_LOGISTIC_REGRESSION_LOGISTIC_REGRESSION_HPP

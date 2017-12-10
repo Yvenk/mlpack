@@ -4,6 +4,11 @@
  * @author Marcus Edel
  *
  * Tests for various convolution strategies.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
 #include <mlpack/core.hpp>
 
@@ -13,16 +18,12 @@
 #include <mlpack/methods/ann/convolution_rules/svd_convolution.hpp>
 
 #include <boost/test/unit_test.hpp>
-#include "old_boost_test_definitions.hpp"
+#include "test_tools.hpp"
 
 using namespace mlpack;
 using namespace mlpack::ann;
 
 BOOST_AUTO_TEST_SUITE(ConvolutionTest);
-
-// Be careful!  When writing new tests, always get the boolean value and store
-// it in a temporary, because the Boost unit test macros do weird things and
-// will cause bizarre problems.
 
 /*
  * Implementation of the convolution function test.

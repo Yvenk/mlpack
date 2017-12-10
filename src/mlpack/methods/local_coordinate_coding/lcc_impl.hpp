@@ -3,9 +3,14 @@
  * @author Nishant Mehta
  *
  * Implementation of Local Coordinate Coding
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_LOCAL_COORDINATE_CODING_LCC_IMPL_HPP
-#define __MLPACK_METHODS_LOCAL_COORDINATE_CODING_LCC_IMPL_HPP
+#ifndef MLPACK_METHODS_LOCAL_COORDINATE_CODING_LCC_IMPL_HPP
+#define MLPACK_METHODS_LOCAL_COORDINATE_CODING_LCC_IMPL_HPP
 
 // In case it hasn't been included yet.
 #include "lcc.hpp"
@@ -101,14 +106,14 @@ void LocalCoordinateCoding::Train(
 }
 
 template<typename Archive>
-void LocalCoordinateCoding::Serialize(Archive& ar,
+void LocalCoordinateCoding::serialize(Archive& ar,
                                       const unsigned int /* version */)
 {
-  ar & data::CreateNVP(atoms, "atoms");
-  ar & data::CreateNVP(dictionary, "dictionary");
-  ar & data::CreateNVP(lambda, "lambda");
-  ar & data::CreateNVP(maxIterations, "maxIterations");
-  ar & data::CreateNVP(tolerance, "tolerance");
+  ar & BOOST_SERIALIZATION_NVP(atoms);
+  ar & BOOST_SERIALIZATION_NVP(dictionary);
+  ar & BOOST_SERIALIZATION_NVP(lambda);
+  ar & BOOST_SERIALIZATION_NVP(maxIterations);
+  ar & BOOST_SERIALIZATION_NVP(tolerance);
 }
 
 } // namespace lcc

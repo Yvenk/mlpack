@@ -4,11 +4,16 @@
  *
  * Statistic class for RangeSearch, which just holds the last visited node and
  * the corresponding base case result.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_RANGE_SEARCH_RANGE_SEARCH_STAT_HPP
-#define __MLPACK_METHODS_RANGE_SEARCH_RANGE_SEARCH_STAT_HPP
+#ifndef MLPACK_METHODS_RANGE_SEARCH_RANGE_SEARCH_STAT_HPP
+#define MLPACK_METHODS_RANGE_SEARCH_RANGE_SEARCH_STAT_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 
 namespace mlpack {
 namespace range {
@@ -41,9 +46,9 @@ class RangeSearchStat
 
   //! Serialize the statistic.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */)
+  void serialize(Archive& ar, const unsigned int /* version */)
   {
-    ar & data::CreateNVP(lastDistance, "lastDistance");
+    ar & BOOST_SERIALIZATION_NVP(lastDistance);
   }
 
  private:
@@ -51,7 +56,7 @@ class RangeSearchStat
   double lastDistance;
 };
 
-} // namespace neighbor
+} // namespace range
 } // namespace mlpack
 
 #endif

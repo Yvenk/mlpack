@@ -3,11 +3,16 @@
  * @author Udit Saxena
  *
  * Definition of Perceptron class.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_PERCEPTRON_PERCEPTRON_HPP
-#define __MLPACK_METHODS_PERCEPTRON_PERCEPTRON_HPP
+#ifndef MLPACK_METHODS_PERCEPTRON_PERCEPTRON_HPP
+#define MLPACK_METHODS_PERCEPTRON_PERCEPTRON_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 
 #include "initialization_methods/zero_init.hpp"
 #include "initialization_methods/random_init.hpp"
@@ -70,12 +75,15 @@ class Perceptron
    * @param other The other initiated Perceptron object from which we copy the
    *       values from.
    * @param data The data on which to train this Perceptron object on.
-   * @param D Weight vector to use while training. For boosting purposes.
    * @param labels The labels of data.
+   * @param numClasses Number of classes in the data.
+   * @param instanceWeights Weight vector to use while training. For boosting
+   *      purposes.
    */
-  Perceptron(const Perceptron<>& other,
+  Perceptron(const Perceptron& other,
              const MatType& data,
              const arma::Row<size_t>& labels,
+             const size_t numClasses,
              const arma::rowvec& instanceWeights);
 
   /**
@@ -88,13 +96,14 @@ class Perceptron
    * multiple datasets sequentially.
    *
    * @param data Dataset on which training should be performed.
-   * @param labels Labels of the dataset.  Make sure that these labels don't
-   *      contain any values greater than NumClasses()!
+   * @param labels Labels of the dataset.
+   * @param numClasses Number of classes in the data.
    * @param instanceWeights Cost matrix. Stores the cost of mispredicting
    *      instances.  This is useful for boosting.
    */
   void Train(const MatType& data,
              const arma::Row<size_t>& labels,
+             const size_t numClasses,
              const arma::rowvec& instanceWeights = arma::rowvec());
 
   /**
@@ -111,7 +120,7 @@ class Perceptron
    * Serialize the perceptron.
    */
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */);
+  void serialize(Archive& ar, const unsigned int /* version */);
 
   //! Get the maximum number of iterations.
   size_t MaxIterations() const { return maxIterations; }
@@ -131,7 +140,7 @@ class Perceptron
   //! Modify the biases.  You had better know what you are doing!
   arma::vec& Biases() { return biases; }
 
-private:
+ private:
   //! The maximum number of iterations during training.
   size_t maxIterations;
 

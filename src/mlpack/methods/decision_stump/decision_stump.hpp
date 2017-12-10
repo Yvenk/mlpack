@@ -3,11 +3,16 @@
  * @author Udit Saxena
  *
  * Definition of decision stumps.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_DECISION_STUMP_DECISION_STUMP_HPP
-#define __MLPACK_METHODS_DECISION_STUMP_DECISION_STUMP_HPP
+#ifndef MLPACK_METHODS_DECISION_STUMP_DECISION_STUMP_HPP
+#define MLPACK_METHODS_DECISION_STUMP_DECISION_STUMP_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 
 namespace mlpack {
 namespace decision_stump {
@@ -35,12 +40,12 @@ class DecisionStump
    *
    * @param data Input, training data.
    * @param labels Labels of training data.
-   * @param classes Number of distinct classes in labels.
+   * @param numClasses Number of distinct classes in labels.
    * @param bucketSize Minimum size of bucket when splitting.
    */
   DecisionStump(const MatType& data,
                 const arma::Row<size_t>& labels,
-                const size_t classes,
+                const size_t numClasses,
                 const size_t bucketSize = 10);
 
   /**
@@ -57,6 +62,7 @@ class DecisionStump
   DecisionStump(const DecisionStump<>& other,
                 const MatType& data,
                 const arma::Row<size_t>& labels,
+                const size_t numClasses,
                 const arma::rowvec& weights);
 
   /**
@@ -73,12 +79,29 @@ class DecisionStump
    *
    * @param data Dataset to train on.
    * @param labels Labels for each point in the dataset.
-   * @param classes Number of classes in the dataset.
+   * @param numClasses Number of classes in the dataset.
    * @param bucketSize Minimum size of bucket when splitting.
    */
   void Train(const MatType& data,
              const arma::Row<size_t>& labels,
-             const size_t classes,
+             const size_t numClasses,
+             const size_t bucketSize);
+
+  /**
+   * Train the decision stump on the given data, with the given weights.  This
+   * completely overwrites any previous training data, so after training the
+   * stump may be completely different.
+   *
+   * @param data Dataset to train on.
+   * @param labels Labels for each point in the dataset.
+   * @param weights Weights for each point in the dataset.
+   * @param numClasses Number of classes in the dataset.
+   * @param bucketSize Minimum size of bucket when splitting.
+   */
+  void Train(const MatType& data,
+             const arma::Row<size_t>& labels,
+             const arma::rowvec& weights,
+             const size_t numClasses,
              const size_t bucketSize);
 
   /**
@@ -108,11 +131,11 @@ class DecisionStump
 
   //! Serialize the decision stump.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */);
+  void serialize(Archive& ar, const unsigned int /* version */);
 
  private:
   //! The number of classes (we must store this for boosting).
-  size_t classes;
+  size_t numClasses;
   //! The minimum number of points in a bucket.
   size_t bucketSize;
 
@@ -131,8 +154,8 @@ class DecisionStump
    *     candidate for the splitting dimension.
    * @tparam UseWeights Whether we need to run a weighted Decision Stump.
    */
-  template<bool UseWeights>
-  double SetupSplitDimension(const arma::rowvec& dimension,
+  template<bool UseWeights, typename VecType>
+  double SetupSplitDimension(const VecType& dimension,
                              const arma::Row<size_t>& labels,
                              const arma::rowvec& weightD);
 

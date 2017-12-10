@@ -4,9 +4,14 @@
  *
  * Inner product induced metric.  If given a kernel function, this gives the
  * complementary metric.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_FASTMKS_IP_METRIC_HPP
-#define __MLPACK_METHODS_FASTMKS_IP_METRIC_HPP
+#ifndef MLPACK_METHODS_FASTMKS_IP_METRIC_HPP
+#define MLPACK_METHODS_FASTMKS_IP_METRIC_HPP
 
 namespace mlpack {
 namespace metric {
@@ -46,7 +51,7 @@ class IPMetric
    * @return Distance between the two points in kernel space.
    */
   template<typename VecTypeA, typename VecTypeB>
-  double Evaluate(const VecTypeA& a, const VecTypeB& b);
+  typename VecTypeA::elem_type Evaluate(const VecTypeA& a, const VecTypeB& b);
 
   //! Get the kernel.
   const KernelType& Kernel() const { return *kernel; }
@@ -55,7 +60,7 @@ class IPMetric
 
   //! Serialize the metric.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int version);
+  void serialize(Archive& ar, const unsigned int version);
 
  private:
   //! The kernel we are using.

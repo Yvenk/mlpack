@@ -4,11 +4,16 @@
  *
  * Defines the RAQueryStat class, which is the statistic used for
  * rank-approximate nearest neighbor search (RASearch).
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_RANN_RA_QUERY_STAT_HPP
-#define __MLPACK_METHODS_RANN_RA_QUERY_STAT_HPP
+#ifndef MLPACK_METHODS_RANN_RA_QUERY_STAT_HPP
+#define MLPACK_METHODS_RANN_RA_QUERY_STAT_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 
 #include <mlpack/core/tree/binary_space_tree.hpp>
 
@@ -57,10 +62,10 @@ class RAQueryStat
 
   //! Serialize the statistic.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */)
+  void serialize(Archive& ar, const unsigned int /* version */)
   {
-    ar & data::CreateNVP(bound, "bound");
-    ar & data::CreateNVP(numSamplesMade, "numSamplesMade");
+    ar & BOOST_SERIALIZATION_NVP(bound);
+    ar & BOOST_SERIALIZATION_NVP(numSamplesMade);
   }
 
  private:

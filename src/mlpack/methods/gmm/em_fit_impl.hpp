@@ -4,12 +4,18 @@
  * @author Michael Fox
  *
  * Implementation of EM algorithm for fitting GMMs.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_GMM_EM_FIT_IMPL_HPP
-#define __MLPACK_METHODS_GMM_EM_FIT_IMPL_HPP
+#ifndef MLPACK_METHODS_GMM_EM_FIT_IMPL_HPP
+#define MLPACK_METHODS_GMM_EM_FIT_IMPL_HPP
 
 // In case it hasn't been included yet.
 #include "em_fit.hpp"
+#include "diagonal_constraint.hpp"
 
 namespace mlpack {
 namespace gmm {
@@ -34,6 +40,17 @@ void EMFit<InitialClusteringType, CovarianceConstraintPolicy>::Estimate(
     arma::vec& weights,
     const bool useInitialModel)
 {
+  // Shortcut: if the user is using the DiagonalConstraint, then we will call
+  // out to Armadillo.  But Armadillo uses uword internally as an OpenMP index
+  // type, which crashes Visual Studio, so don't do this on Windows.
+  #ifndef _WIN32
+  if (std::is_same<CovarianceConstraintPolicy, DiagonalConstraint>::value)
+  {
+    ArmadilloGMMWrapper(observations, dists, weights, useInitialModel);
+    return;
+  }
+  #endif
+
   // Only perform initial clustering if the user wanted it.
   if (!useInitialModel)
     InitialClustering(observations, dists, weights);
@@ -299,17 +316,77 @@ double EMFit<InitialClusteringType, CovarianceConstraintPolicy>::LogLikelihood(
 
 template<typename InitialClusteringType, typename CovarianceConstraintPolicy>
 template<typename Archive>
-void EMFit<InitialClusteringType, CovarianceConstraintPolicy>::Serialize(
+void EMFit<InitialClusteringType, CovarianceConstraintPolicy>::serialize(
     Archive& ar,
     const unsigned int /* version */)
 {
-  using data::CreateNVP;
-
-  ar & CreateNVP(maxIterations, "maxIterations");
-  ar & CreateNVP(tolerance, "tolerance");
-  ar & CreateNVP(clusterer, "clusterer");
-  ar & CreateNVP(constraint, "constraint");
+  ar & BOOST_SERIALIZATION_NVP(maxIterations);
+  ar & BOOST_SERIALIZATION_NVP(tolerance);
+  ar & BOOST_SERIALIZATION_NVP(clusterer);
+  ar & BOOST_SERIALIZATION_NVP(constraint);
 }
+
+// Armadillo uses uword internally as an OpenMP index type, which crashes Visual
+// Studio.
+#ifndef _WIN32
+template<typename InitialClusteringType, typename CovarianceConstraintPolicy>
+void EMFit<InitialClusteringType, CovarianceConstraintPolicy>::
+ArmadilloGMMWrapper(const arma::mat& observations,
+                    std::vector<distribution::GaussianDistribution>& dists,
+                    arma::vec& weights,
+                    const bool useInitialModel)
+{
+  arma::gmm_diag g;
+
+  // Warn the user that tolerance isn't used for convergence here if they've
+  // specified a non-default value.
+  if (tolerance != EMFit().Tolerance())
+    Log::Warn << "GMM::Train(): tolerance ignored when training GMMs with "
+        << "DiagonalConstraint." << std::endl;
+
+  // If the initial clustering is the default k-means, we'll just use
+  // Armadillo's implementation.  If mlpack ever changes k-means defaults to use
+  // something that is reliably quicker than the Lloyd iteration k-means update,
+  // then this code maybe should be revisited.
+  if (!std::is_same<InitialClusteringType, mlpack::kmeans::KMeans<>>::value ||
+      useInitialModel)
+  {
+    // Use clusterer to get initial values.
+    if (!useInitialModel)
+      InitialClustering(observations, dists, weights);
+
+    // Assemble matrix of means.
+    arma::mat means(observations.n_rows, dists.size());
+    arma::mat covs(observations.n_rows, dists.size());
+    for (size_t i = 0; i < dists.size(); ++i)
+    {
+      means.col(i) = dists[i].Mean();
+      covs.col(i) = dists[i].Covariance().diag();
+    }
+
+    g.reset(observations.n_rows, dists.size());
+    g.set_params(std::move(means), std::move(covs), weights.t());
+
+    g.learn(observations, dists.size(), arma::eucl_dist, arma::keep_existing, 0,
+        maxIterations, 1e-10, false /* no printing */);
+  }
+  else
+  {
+    // Use Armadillo for the initial clustering.  We'll try and match mlpack
+    // defaults.
+    g.learn(observations, dists.size(), arma::eucl_dist, arma::static_subset,
+        1000, maxIterations, 1e-10, false /* no printing */);
+  }
+
+  // Extract means, covariances, and weights.
+  weights = g.hefts.t();
+  for (size_t i = 0; i < dists.size(); ++i)
+  {
+    dists[i].Mean() = g.means.col(i);
+    dists[i].Covariance(std::move(arma::diagmat(g.dcovs.col(i))));
+  }
+}
+#endif
 
 } // namespace gmm
 } // namespace mlpack

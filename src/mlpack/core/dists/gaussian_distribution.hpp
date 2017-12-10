@@ -4,11 +4,16 @@
  * @author Michael Fox
  *
  * Implementation of the Gaussian distribution.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_DISTRIBUTIONS_GAUSSIAN_DISTRIBUTION_HPP
-#define __MLPACK_CORE_DISTRIBUTIONS_GAUSSIAN_DISTRIBUTION_HPP
+#ifndef MLPACK_CORE_DISTRIBUTIONS_GAUSSIAN_DISTRIBUTION_HPP
+#define MLPACK_CORE_DISTRIBUTIONS_GAUSSIAN_DISTRIBUTION_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 
 namespace mlpack {
 namespace distribution {
@@ -37,7 +42,7 @@ class GaussianDistribution
   /**
    * Default constructor, which creates a Gaussian with zero dimension.
    */
-  GaussianDistribution() { /* nothing to do */ }
+  GaussianDistribution() : logDetCov(0.0) { /* nothing to do */ }
 
   /**
    * Create a Gaussian distribution with zero mean and identity covariance with
@@ -78,7 +83,7 @@ class GaussianDistribution
 
   /**
    * Calculates the multivariate Gaussian probability density function for each
-   * data point (column) in the given matrix
+   * data point (column) in the given matrix.
    *
    * @param x List of observations.
    * @param probabilities Output probabilities for each input observation.
@@ -141,16 +146,14 @@ class GaussianDistribution
    * Serialize the distribution.
    */
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */)
+  void serialize(Archive& ar, const unsigned int /* version */)
   {
-    using data::CreateNVP;
-
     // We just need to serialize each of the members.
-    ar & CreateNVP(mean, "mean");
-    ar & CreateNVP(covariance, "covariance");
-    ar & CreateNVP(covLower, "covLower");
-    ar & CreateNVP(invCov, "invCov");
-    ar & CreateNVP(logDetCov, "logDetCov");
+    ar & BOOST_SERIALIZATION_NVP(mean);
+    ar & BOOST_SERIALIZATION_NVP(covariance);
+    ar & BOOST_SERIALIZATION_NVP(covLower);
+    ar & BOOST_SERIALIZATION_NVP(invCov);
+    ar & BOOST_SERIALIZATION_NVP(logDetCov);
   }
 
  private:
@@ -169,8 +172,9 @@ class GaussianDistribution
 * @param x List of observations.
 * @param probabilities Output log probabilities for each input observation.
 */
-inline void GaussianDistribution::LogProbability(const arma::mat& x,
-                                                 arma::vec& logProbabilities) const
+inline void GaussianDistribution::LogProbability(
+    const arma::mat& x,
+    arma::vec& logProbabilities) const
 {
   // Column i of 'diffs' is the difference between x.col(i) and the mean.
   arma::mat diffs = x - (mean * arma::ones<arma::rowvec>(x.n_cols));

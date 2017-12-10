@@ -4,11 +4,17 @@
  *
  * An implementation of the standard Hoeffding tree by Pedro Domingos and Geoff
  * Hulten in ``Mining High-Speed Data Streams''.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_HOEFFDING_TREES_HOEFFDING_TREE_HPP
-#define __MLPACK_METHODS_HOEFFDING_TREES_HOEFFDING_TREE_HPP
+#ifndef MLPACK_METHODS_HOEFFDING_TREES_HOEFFDING_TREE_HPP
+#define MLPACK_METHODS_HOEFFDING_TREES_HOEFFDING_TREE_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
+#include <mlpack/core/data/dataset_mapper.hpp>
 #include "gini_impurity.hpp"
 #include "hoeffding_numeric_split.hpp"
 #include "hoeffding_categorical_split.hpp"
@@ -130,6 +136,12 @@ class HoeffdingTree
                     dimensionMappings = NULL);
 
   /**
+   * Construct a Hoeffding tree with no data and no information.  Be sure to
+   * call Train() before trying to use the tree.
+   */
+  HoeffdingTree();
+
+  /**
    * Copy another tree (warning: this will duplicate the tree entirely, and may
    * use a lot of memory.  Make sure it's what you want before you do it).
    *
@@ -152,6 +164,16 @@ class HoeffdingTree
    */
   template<typename MatType>
   void Train(const MatType& data,
+             const arma::Row<size_t>& labels,
+             const bool batchTraining = true);
+
+  /**
+   * Train on a set of points, either in streaming mode or in batch mode, with
+   * the given labels and the given DatasetInfo.  This will reset the tree.
+   */
+  template<typename MatType>
+  void Train(const MatType& data,
+             const data::DatasetInfo& info,
              const arma::Row<size_t>& labels,
              const bool batchTraining = true);
 
@@ -232,6 +254,9 @@ class HoeffdingTree
   template<typename VecType>
   size_t Classify(const VecType& point) const;
 
+  //! Get the size of the Hoeffding Tree.
+  size_t NumDescendants() const;
+
   /**
    * Classify the given point and also return an estimate of the probability
    * that the prediction is correct.  (This estimate is simply the probability
@@ -280,7 +305,7 @@ class HoeffdingTree
 
   //! Serialize the split.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */);
+  void serialize(Archive& ar, const unsigned int /* version */);
 
  private:
   // We need to keep some information for before we have split.

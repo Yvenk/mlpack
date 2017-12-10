@@ -3,9 +3,14 @@
  * @author Ryan Curtin
  *
  * Implementation of the Mahalanobis distance.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_METRICS_MAHALANOBIS_DISTANCE_IMPL_HPP
-#define __MLPACK_CORE_METRICS_MAHALANOBIS_DISTANCE_IMPL_HPP
+#ifndef MLPACK_CORE_METRICS_MAHALANOBIS_DISTANCE_IMPL_HPP
+#define MLPACK_CORE_METRICS_MAHALANOBIS_DISTANCE_IMPL_HPP
 
 #include "mahalanobis_distance.hpp"
 
@@ -45,10 +50,10 @@ double MahalanobisDistance<true>::Evaluate(const VecTypeA& a,
 // Serialize the Mahalanobis distance.
 template<bool TakeRoot>
 template<typename Archive>
-void MahalanobisDistance<TakeRoot>::Serialize(Archive& ar,
+void MahalanobisDistance<TakeRoot>::serialize(Archive& ar,
                                               const unsigned int /* version */)
 {
-  ar & data::CreateNVP(covariance, "covariance");
+  ar & BOOST_SERIALIZATION_NVP(covariance);
 }
 
 } // namespace metric

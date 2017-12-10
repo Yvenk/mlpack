@@ -4,9 +4,14 @@
  *
  * Implementation of Sparse Coding with Dictionary Learning using l1 (LASSO) or
  * l1+l2 (Elastic Net) regularization.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_SPARSE_CODING_SPARSE_CODING_IMPL_HPP
-#define __MLPACK_METHODS_SPARSE_CODING_SPARSE_CODING_IMPL_HPP
+#ifndef MLPACK_METHODS_SPARSE_CODING_SPARSE_CODING_IMPL_HPP
+#define MLPACK_METHODS_SPARSE_CODING_SPARSE_CODING_IMPL_HPP
 
 // In case it hasn't already been included.
 #include "sparse_coding.hpp"
@@ -104,15 +109,15 @@ void SparseCoding::Train(
 }
 
 template<typename Archive>
-void SparseCoding::Serialize(Archive& ar, const unsigned int /* version */)
+void SparseCoding::serialize(Archive& ar, const unsigned int /* version */)
 {
-  ar & data::CreateNVP(atoms, "atoms");
-  ar & data::CreateNVP(dictionary, "dictionary");
-  ar & data::CreateNVP(lambda1, "lambda1");
-  ar & data::CreateNVP(lambda2, "lambda2");
-  ar & data::CreateNVP(maxIterations, "maxIterations");
-  ar & data::CreateNVP(objTolerance, "objTolerance");
-  ar & data::CreateNVP(newtonTolerance, "newtonTolerance");
+  ar & BOOST_SERIALIZATION_NVP(atoms);
+  ar & BOOST_SERIALIZATION_NVP(dictionary);
+  ar & BOOST_SERIALIZATION_NVP(lambda1);
+  ar & BOOST_SERIALIZATION_NVP(lambda2);
+  ar & BOOST_SERIALIZATION_NVP(maxIterations);
+  ar & BOOST_SERIALIZATION_NVP(objTolerance);
+  ar & BOOST_SERIALIZATION_NVP(newtonTolerance);
 }
 
 } // namespace sparse_coding

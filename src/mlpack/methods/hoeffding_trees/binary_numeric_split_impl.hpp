@@ -3,9 +3,14 @@
  * @author Ryan Curtin
  *
  * Implementation of the BinaryNumericSplit class.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_HOEFFDING_TREES_BINARY_NUMERIC_SPLIT_IMPL_HPP
-#define __MLPACK_METHODS_HOEFFDING_TREES_BINARY_NUMERIC_SPLIT_IMPL_HPP
+#ifndef MLPACK_METHODS_HOEFFDING_TREES_BINARY_NUMERIC_SPLIT_IMPL_HPP
+#define MLPACK_METHODS_HOEFFDING_TREES_BINARY_NUMERIC_SPLIT_IMPL_HPP
 
 // In case it hasn't been included yet.
 #include "binary_numeric_split.hpp"
@@ -121,7 +126,7 @@ void BinaryNumericSplit<FitnessFunction, ObservationType>::Split(
   double min = DBL_MAX;
   double max = -DBL_MAX;
   for (typename std::multimap<ObservationType, size_t>::const_iterator it =
-      sortedElements.begin();// (*it).first < bestSplit; ++it)
+      sortedElements.begin(); // (*it).first < bestSplit; ++it)
       it != sortedElements.end(); ++it)
   {
     // Move the point to the correct side of the split.
@@ -165,13 +170,13 @@ double BinaryNumericSplit<FitnessFunction, ObservationType>::
 
 template<typename FitnessFunction, typename ObservationType>
 template<typename Archive>
-void BinaryNumericSplit<FitnessFunction, ObservationType>::Serialize(
+void BinaryNumericSplit<FitnessFunction, ObservationType>::serialize(
     Archive& ar,
     const unsigned int /* version */)
 {
   // Serialize.
-  ar & data::CreateNVP(sortedElements, "sortedElements");
-  ar & data::CreateNVP(classCounts, "classCounts");
+  ar & BOOST_SERIALIZATION_NVP(sortedElements);
+  ar & BOOST_SERIALIZATION_NVP(classCounts);
 }
 
 

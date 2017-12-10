@@ -4,11 +4,11 @@
 set(SOURCES
   # the DET class
   dtree.hpp
-  dtree.cpp
+  dtree_impl.hpp
 
-  # the util file
+  # Utility files
   dt_utils.hpp
-  dt_utils.cpp
+  dt_utils_impl.hpp
 )
 
 # add directory name to sources
@@ -19,12 +19,5 @@ endforeach()
 # append sources (with directory name) to list of all mlpack sources (used at the parent scope)
 set(MLPACK_SRCS ${MLPACK_SRCS} ${DIR_SRCS} PARENT_SCOPE)
 
-# executable
-add_executable(mlpack_det
-  det_main.cpp
-)
-# link dependencies of executable
-target_link_libraries(mlpack_det
-  mlpack
-)
-install(TARGETS mlpack_det RUNTIME DESTINATION bin)
+add_cli_executable(det)
+add_python_binding(det)

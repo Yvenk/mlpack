@@ -2,8 +2,14 @@
  * @file timers.cpp
  * @author Matthew Amidon
  * @author Marcus Edel
+ * @author Ryan Curtin
  *
  * Implementation of timers.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
 #include "timers.hpp"
 #include "cli.hpp"
@@ -13,269 +19,214 @@
 #include <string>
 
 using namespace mlpack;
-
-// On Windows machines, we need to define timersub.
-#ifdef _WIN32
-inline void timersub(const timeval* tvp, const timeval* uvp, timeval* vvp)
-{
-  vvp->tv_sec = tvp->tv_sec - uvp->tv_sec;
-  vvp->tv_usec = tvp->tv_usec - uvp->tv_usec;
-  if (vvp->tv_usec < 0)
-  {
-     --vvp->tv_sec;
-     vvp->tv_usec += 1000000;
-  }
-}
-#endif
+using namespace std;
+using namespace chrono;
 
 /**
  * Start the given timer.
  */
-void Timer::Start(const std::string& name)
+void Timer::Start(const string& name)
 {
-  CLI::GetSingleton().timer.StartTimer(name);
+  CLI::GetSingleton().timer.StartTimer(name, this_thread::get_id());
 }
 
 /**
  * Stop the given timer.
  */
-void Timer::Stop(const std::string& name)
+void Timer::Stop(const string& name)
 {
-  CLI::GetSingleton().timer.StopTimer(name);
+  CLI::GetSingleton().timer.StopTimer(name, this_thread::get_id());
 }
 
 /**
- * Get the given timer.
+ * Get the given timer, summing over all threads.
  */
-timeval Timer::Get(const std::string& name)
+microseconds Timer::Get(const string& name)
 {
   return CLI::GetSingleton().timer.GetTimer(name);
 }
 
-std::map<std::string, timeval>& Timers::GetAllTimers()
+// Enable timing.
+void Timer::EnableTiming()
 {
+  CLI::GetSingleton().timer.Enabled() = true;
+}
+
+// Disable timing.
+void Timer::DisableTiming()
+{
+  CLI::GetSingleton().timer.Enabled() = false;
+}
+
+// Reset all timers.  Save state of enabled.
+void Timer::ResetAll()
+{
+  CLI::GetSingleton().timer.Reset();
+}
+
+// Reset a Timers object.
+void Timers::Reset()
+{
+  lock_guard<mutex> lock(timersMutex);
+  timers.clear();
+  timerStartTime.clear();
+}
+
+map<string, microseconds> Timers::GetAllTimers()
+{
+  // Make a copy of the timer.
+  lock_guard<mutex> lock(timersMutex);
   return timers;
 }
 
-timeval Timers::GetTimer(const std::string& timerName)
+microseconds Timers::GetTimer(const string& timerName)
 {
+  if (!enabled)
+    return microseconds(0);
+
+  lock_guard<mutex> lock(timersMutex);
   return timers[timerName];
 }
 
-bool Timers::GetState(std::string timerName)
+bool Timers::GetState(const string& timerName,
+                      const thread::id& threadId)
 {
-  return timerState[timerName];
+  lock_guard<mutex> lock(timersMutex);
+  if (timerStartTime.count(threadId) == 0)
+    return 0;
+  return (timerStartTime[threadId].count(timerName) > 0);
 }
 
-void Timers::PrintTimer(const std::string& timerName)
+void Timers::PrintTimer(const string& timerName)
 {
-  timeval& t = timers[timerName];
-  Log::Info << t.tv_sec << "." << std::setw(6) << std::setfill('0')
-      << t.tv_usec << "s";
+  // Convert microseconds to seconds.
+  microseconds totalDuration = GetTimer(timerName);
+  seconds totalDurationSec = duration_cast<seconds>(totalDuration);
+  microseconds totalDurationMicroSec =
+      duration_cast<microseconds>(totalDuration % seconds(1));
+  Log::Info << totalDurationSec.count() << "." << setw(6)
+      << setfill('0') << totalDurationMicroSec.count() << "s";
 
   // Also output convenient day/hr/min/sec.
-  int days = t.tv_sec / 86400; // Integer division rounds down.
-  int hours = (t.tv_sec % 86400) / 3600;
-  int minutes = (t.tv_sec % 3600) / 60;
-  int seconds = (t.tv_sec % 60);
+  // The following line is a custom duration for a day.
+  typedef duration<int, ratio<60 * 60 * 24, 1>> days;
+  days d = duration_cast<days>(totalDuration);
+  hours h = duration_cast<hours>(totalDuration % days(1));
+  minutes m = duration_cast<minutes>(totalDuration % hours(1));
+  seconds s = duration_cast<seconds>(totalDuration % minutes(1));
   // No output if it didn't even take a minute.
-  if (!(days == 0 && hours == 0 && minutes == 0))
+  if (!(d.count() == 0 && h.count() == 0 && m.count() == 0))
   {
     bool output = false; // Denotes if we have output anything yet.
     Log::Info << " (";
 
     // Only output units if they have nonzero values (yes, a bit tedious).
-    if (days > 0)
+    if (d.count() > 0)
     {
-      Log::Info << days << " days";
+      Log::Info << d.count() << " days";
       output = true;
     }
 
-    if (hours > 0)
+    if (h.count() > 0)
     {
       if (output)
         Log::Info << ", ";
-      Log::Info << hours << " hrs";
+      Log::Info << h.count() << " hrs";
       output = true;
     }
 
-    if (minutes > 0)
+    if (m.count() > 0)
     {
       if (output)
         Log::Info << ", ";
-      Log::Info << minutes << " mins";
+      Log::Info << m.count() << " mins";
       output = true;
     }
 
-    if (seconds > 0)
+    if (s.count() > 0)
     {
       if (output)
         Log::Info << ", ";
-      Log::Info << seconds << "." << std::setw(1) << (t.tv_usec / 100000) <<
-          "secs";
-      output = true;
+      Log::Info << s.count() << "." << setw(1)
+          << (totalDurationMicroSec.count() / 100000) << " secs";
     }
 
     Log::Info << ")";
   }
 
-  Log::Info << std::endl;
+  Log::Info << endl;
 }
 
-void Timers::GetTime(timeval* tv)
+void Timers::StopAllTimers()
 {
-#if defined(__MACH__) && defined(__APPLE__)
+  // Terminate the program timers.  Don't use StopTimer() since that modifies
+  // the map and would invalidate our iterators.
+  lock_guard<mutex> lock(timersMutex);
 
-  static mach_timebase_info_data_t info;
+  high_resolution_clock::time_point currTime = high_resolution_clock::now();
+  for (auto it : timerStartTime)
+    for (auto it2 : it.second)
+      timers[it2.first] += duration_cast<microseconds>(currTime - it2.second);
 
-  // If this is the first time we've run, get the timebase.
-  // We can use denom == 0 to indicate that sTimebaseInfo is
-  // uninitialised.
-  if (info.denom == 0) {
-    (void) mach_timebase_info(&info);
-  }
-
-  // Hope that the multiplication doesn't overflow.
-  uint64_t nsecs = mach_absolute_time() * info.numer / info.denom;
-  tv->tv_sec = nsecs / 1e9;
-  tv->tv_usec = (nsecs / 1e3) - (tv->tv_sec * 1e6);
-
-#elif defined(_POSIX_VERSION)
-#if defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0)
-
-  // Get the right clock_id.
-#if defined(CLOCK_MONOTONIC_PRECISE)
-  static const clockid_t id = CLOCK_MONOTONIC_PRECISE;
-#elif defined(CLOCK_MONOTONIC_RAW)
-  static const clockid_t id = CLOCK_MONOTONIC_RAW;
-#elif defined(CLOCK_MONOTONIC)
-  static const clockid_t id = CLOCK_MONOTONIC;
-#elif defined(CLOCK_REALTIME)
-  static const clockid_t id = CLOCK_REALTIME;
-#else
-  static const clockid_t id = ((clockid_t) - 1);
-#endif // CLOCK
-
-  struct timespec ts;
-
-  // Returns the current value tp for the specified clock_id.
-  if (clock_gettime(id, &ts) != -1 && id != ((clockid_t) - 1))
-  {
-    tv->tv_sec = ts.tv_sec;
-    tv->tv_usec = ts.tv_nsec / 1e3;
-  }
-
-  // Fallback for the clock_gettime function.
-  gettimeofday(tv, NULL);
-
-#endif  // _POSIX_TIMERS
-#elif defined(_WIN32)
-
-  static double frequency = 0.0;
-  static LARGE_INTEGER offset;
-
-  // If this is the first time we've run, get the frequency.
-  // We use frequency == 0.0 to indicate that
-  // QueryPerformanceFrequency is uninitialised.
-  if (frequency == 0.0)
-  {
-    LARGE_INTEGER pF;
-    if (!QueryPerformanceFrequency(&pF))
-    {
-      // Fallback for the QueryPerformanceCounter function.
-      FileTimeToTimeVal(tv);
-    }
-    else
-    {
-      QueryPerformanceCounter(&offset);
-      frequency = (double)pF.QuadPart / 1000000.0;
-    }
-  }
-
-  if (frequency != 0.0)
-  {
-    LARGE_INTEGER pC;
-    // Get the current performance-counter value.
-    QueryPerformanceCounter(&pC);
-
-    pC.QuadPart -= offset.QuadPart;
-    double microseconds = (double)pC.QuadPart / frequency;
-    pC.QuadPart = microseconds;
-    tv->tv_sec = (long)pC.QuadPart / 1000000;
-    tv->tv_usec = (long)(pC.QuadPart % 1000000);
-  }
-
-#endif
+  // If all timers are stopped, we can clear the maps.
+  timerStartTime.clear();
 }
 
-void Timers::StartTimer(const std::string& timerName)
+void Timers::StartTimer(const string& timerName,
+                        const thread::id& threadId)
 {
-  if ((timerState[timerName] == 1) && (timerName != "total_time"))
+  // Don't do anything if we aren't timing.
+  if (!enabled)
+    return;
+
+  lock_guard<mutex> lock(timersMutex);
+
+  if ((timerStartTime.count(threadId) > 0) &&
+      (timerStartTime[threadId].count(timerName)))
   {
-    std::ostringstream error;
+    ostringstream error;
     error << "Timer::Start(): timer '" << timerName
         << "' has already been started";
-    throw std::runtime_error(error.str());
+    throw runtime_error(error.str());
   }
 
-  timerState[timerName] = true;
+  high_resolution_clock::time_point currTime = high_resolution_clock::now();
 
-  timeval tmp;
-  tmp.tv_sec = 0;
-  tmp.tv_usec = 0;
-
-  GetTime(&tmp);
-
-  // Check to see if the timer already exists.  If it does, we'll subtract the
-  // old value.
-  if (timers.count(timerName) == 1)
+  // If the timer is added for the first time.
+  if (timers.count(timerName) == 0)
   {
-    timeval tmpDelta;
-
-    timersub(&tmp, &timers[timerName], &tmpDelta);
-
-    tmp = tmpDelta;
+    timers[timerName] = (microseconds) 0;
   }
 
-  timers[timerName] = tmp;
+  timerStartTime[threadId][timerName] = currTime;
 }
 
-#ifdef _WIN32
-void Timers::FileTimeToTimeVal(timeval* tv)
+void Timers::StopTimer(const string& timerName,
+                       const thread::id& threadId)
 {
-  FILETIME ftime;
-  uint64_t ptime = 0;
-  // Acquire the file time.
-  GetSystemTimeAsFileTime(&ftime);
-  // Now convert FILETIME to timeval.
-  ptime |= ftime.dwHighDateTime;
-  ptime = ptime << 32;
-  ptime |= ftime.dwLowDateTime;
-  ptime /= 10;
-  ptime -= DELTA_EPOCH_IN_MICROSECS;
+  // Don't do anything if we aren't timing.
+  if (!enabled)
+    return;
 
-  tv->tv_sec = (long) (ptime / 1000000UL);
-  tv->tv_usec = (long) (ptime % 1000000UL);
-}
-#endif // _WIN32
+  lock_guard<mutex> lock(timersMutex);
 
-void Timers::StopTimer(const std::string& timerName)
-{
-  if ((timerState[timerName] == 0) && (timerName != "total_time"))
+  if ((timerStartTime.count(threadId) == 0) ||
+      (timerStartTime[threadId].count(timerName) == 0))
   {
-    std::ostringstream error;
-    error << "Timer::Stop(): timer '" << timerName
-        << "' has already been stopped";
-    throw std::runtime_error(error.str());
+    ostringstream error;
+    error << "Timer::Stop(): no timer with name '" << timerName
+        << "' currently running";
+    throw runtime_error(error.str());
   }
 
-  timerState[timerName] = false;
-
-  timeval delta, b, a = timers[timerName];
-
-  GetTime(&b);
+  high_resolution_clock::time_point currTime = high_resolution_clock::now();
 
   // Calculate the delta time.
-  timersub(&b, &a, &delta);
-  timers[timerName] = delta;
+  timers[timerName] += duration_cast<microseconds>(currTime -
+      timerStartTime[threadId][timerName]);
+
+  // Remove the entries.
+  timerStartTime[threadId].erase(timerName);
+  if (timerStartTime[threadId].empty())
+    timerStartTime.erase(threadId);
 }

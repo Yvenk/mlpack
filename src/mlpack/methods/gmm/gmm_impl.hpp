@@ -5,9 +5,14 @@
  * @author Michael Fox
  *
  * Implementation of template-based GMM methods.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_GMM_GMM_IMPL_HPP
-#define __MLPACK_METHODS_GMM_GMM_IMPL_HPP
+#ifndef MLPACK_METHODS_GMM_GMM_IMPL_HPP
+#define MLPACK_METHODS_GMM_GMM_IMPL_HPP
 
 // In case it hasn't already been included.
 #include "gmm.hpp"
@@ -54,7 +59,8 @@ double GMM::Train(const arma::mat& observations,
 
     bestLikelihood = LogLikelihood(observations, dists, weights);
 
-    Log::Info << "GMM::Train(): Log-likelihood of trial 0 is " << bestLikelihood        << "." << std::endl;
+    Log::Info << "GMM::Train(): Log-likelihood of trial 0 is "
+        << bestLikelihood << "." << std::endl;
 
     // Now the temporary model.
     std::vector<distribution::GaussianDistribution> distsTrial(gaussians,
@@ -154,7 +160,8 @@ double GMM::Train(const arma::mat& observations,
         weightsTrial = weightsOrig;
       }
 
-      fitter.Estimate(observations, distsTrial, weightsTrial, useExistingModel);
+      fitter.Estimate(observations, probabilities, distsTrial, weightsTrial,
+          useExistingModel);
 
       // Check to see if the log-likelihood of this one is better.
       double newLikelihood = LogLikelihood(observations, distsTrial,
@@ -184,27 +191,20 @@ double GMM::Train(const arma::mat& observations,
  * Serialize the object.
  */
 template<typename Archive>
-void GMM::Serialize(Archive& ar, const unsigned int /* version */)
+void GMM::serialize(Archive& ar, const unsigned int /* version */)
 {
-  using data::CreateNVP;
-
-  ar & CreateNVP(gaussians, "gaussians");
-  ar & CreateNVP(dimensionality, "dimensionality");
+  ar & BOOST_SERIALIZATION_NVP(gaussians);
+  ar & BOOST_SERIALIZATION_NVP(dimensionality);
 
   // Load (or save) the gaussians.  Not going to use the default std::vector
-  // serialize here because it won't call out correctly to Serialize() for each
+  // serialize here because it won't call out correctly to serialize() for each
   // Gaussian distribution.
   if (Archive::is_loading::value)
     dists.resize(gaussians);
 
-  for (size_t i = 0; i < gaussians; ++i)
-  {
-    std::ostringstream oss;
-    oss << "dist" << i;
-    ar & CreateNVP(dists[i], oss.str());
-  }
+  ar & BOOST_SERIALIZATION_NVP(dists);
 
-  ar & CreateNVP(weights, "weights");
+  ar & BOOST_SERIALIZATION_NVP(weights);
 }
 
 } // namespace gmm

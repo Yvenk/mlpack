@@ -2,9 +2,14 @@
  * @file range_impl.hpp
  *
  * Implementation of the (inlined) Range class.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_MATH_RANGE_IMPL_HPP
-#define __MLPACK_CORE_MATH_RANGE_IMPL_HPP
+#ifndef MLPACK_CORE_MATH_RANGE_IMPL_HPP
+#define MLPACK_CORE_MATH_RANGE_IMPL_HPP
 
 #include "range.hpp"
 #include <float.h>
@@ -196,10 +201,10 @@ inline bool RangeType<T>::Contains(const RangeType<T>& r) const
 //! Serialize the range.
 template<typename T>
 template<typename Archive>
-void RangeType<T>::Serialize(Archive& ar, const unsigned int /* version */)
+void RangeType<T>::serialize(Archive& ar, const unsigned int /* version */)
 {
-  ar & data::CreateNVP(hi, "hi");
-  ar & data::CreateNVP(lo, "lo");
+  ar & BOOST_SERIALIZATION_NVP(hi);
+  ar & BOOST_SERIALIZATION_NVP(lo);
 }
 
 } // namespace math

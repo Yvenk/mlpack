@@ -3,11 +3,16 @@
  * @author Ryan Curtin
  *
  * Implementation of HMM utilities to load arbitrary HMM types.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_HMM_HMM_UTIL_IMPL_HPP
-#define __MLPACK_METHODS_HMM_HMM_UTIL_IMPL_HPP
+#ifndef MLPACK_METHODS_HMM_HMM_UTIL_IMPL_HPP
+#define MLPACK_METHODS_HMM_HMM_UTIL_IMPL_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 
 #include <mlpack/methods/hmm/hmm.hpp>
 #include <mlpack/methods/gmm/gmm.hpp>
@@ -61,7 +66,7 @@ void LoadHMMAndPerformActionHelper(const std::string& modelFile,
 
   // Read in the unsigned integer that denotes the type of the model.
   char type;
-  ar >> data::CreateNVP(type, "hmm_type");
+  ar >> BOOST_SERIALIZATION_NVP(type);
 
   using namespace mlpack::distribution;
 
@@ -96,7 +101,7 @@ void DeserializeHMMAndPerformAction(ArchiveType& ar, ExtraInfoType* x)
 {
   // Extract the HMM and perform the action.
   HMMType hmm;
-  ar >> data::CreateNVP(hmm, "hmm");
+  ar >> BOOST_SERIALIZATION_NVP(hmm);
   ActionType::Apply(hmm, x);
 }
 
@@ -138,8 +143,8 @@ void SaveHMMHelper(HMMType& hmm, const std::string& modelFile)
   if (type == char(-1))
     Log::Fatal << "Unknown HMM type given to SaveHMM()!" << std::endl;
 
-  ar << data::CreateNVP(type, "hmm_type");
-  ar << data::CreateNVP(hmm, "hmm");
+  ar << BOOST_SERIALIZATION_NVP(type);
+  ar << BOOST_SERIALIZATION_NVP(hmm);
 }
 
 // Utility functions to turn a type into something we can store.

@@ -1,7 +1,2 @@
-add_executable(mlpack_nmf
-  nmf_main.cpp
-)
-target_link_libraries(mlpack_nmf
-  mlpack
-)
-install(TARGETS mlpack_nmf RUNTIME DESTINATION bin)
+add_cli_executable(nmf)
+add_python_binding(nmf)

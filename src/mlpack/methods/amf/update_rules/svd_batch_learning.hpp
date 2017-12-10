@@ -3,11 +3,16 @@
  * @author Sumedh Ghaisas
  *
  * SVD factorizer used in AMF (Alternating Matrix Factorization).
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_AMF_UPDATE_RULES_SVD_BATCH_LEARNING_HPP
-#define __MLPACK_METHODS_AMF_UPDATE_RULES_SVD_BATCH_LEARNING_HPP
+#ifndef MLPACK_METHODS_AMF_UPDATE_RULES_SVD_BATCH_LEARNING_HPP
+#define MLPACK_METHODS_AMF_UPDATE_RULES_SVD_BATCH_LEARNING_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 
 namespace mlpack {
 namespace amf {
@@ -161,15 +166,14 @@ class SVDBatchLearning
 
   //! Serialize the SVDBatch object.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */)
+  void serialize(Archive& ar, const unsigned int /* version */)
   {
-    using data::CreateNVP;
-    ar & CreateNVP(u, "u");
-    ar & CreateNVP(kw, "kw");
-    ar & CreateNVP(kh, "kh");
-    ar & CreateNVP(momentum, "momentum");
-    ar & CreateNVP(mW, "mW");
-    ar & CreateNVP(mH, "mH");
+    ar & BOOST_SERIALIZATION_NVP(u);
+    ar & BOOST_SERIALIZATION_NVP(kw);
+    ar & BOOST_SERIALIZATION_NVP(kh);
+    ar & BOOST_SERIALIZATION_NVP(momentum);
+    ar & BOOST_SERIALIZATION_NVP(mW);
+    ar & BOOST_SERIALIZATION_NVP(mH);
   }
 
  private:
@@ -253,4 +257,4 @@ inline void SVDBatchLearning::HUpdate<arma::sp_mat>(const arma::sp_mat& V,
 } // namespace amf
 } // namespace mlpack
 
-#endif // __MLPACK_METHODS_AMF_UPDATE_RULES_SVD_BATCH_LEARNING_HPP
+#endif // MLPACK_METHODS_AMF_UPDATE_RULES_SVD_BATCH_LEARNING_HPP

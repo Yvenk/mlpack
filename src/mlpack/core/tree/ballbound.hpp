@@ -3,11 +3,16 @@
  *
  * Bounds that are useful for binary space partitioning trees.
  * Interface to a ball bound that works in arbitrary metric spaces.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_TREE_BALLBOUND_HPP
-#define __MLPACK_CORE_TREE_BALLBOUND_HPP
+#ifndef MLPACK_CORE_TREE_BALLBOUND_HPP
+#define MLPACK_CORE_TREE_BALLBOUND_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 #include <mlpack/core/metrics/lmetric.hpp>
 #include "bound_traits.hpp"
 
@@ -16,14 +21,14 @@ namespace bound {
 
 /**
  * Ball bound encloses a set of points at a specific distance (radius) from a
- * specific point (center). TMetricType is the custom metric type that defaults
+ * specific point (center). MetricType is the custom metric type that defaults
  * to the Euclidean (L2) distance.
  *
+ * @tparam MetricType metric type used in the distance measure.
  * @tparam VecType Type of vector (arma::vec or arma::sp_vec or similar).
- * @tparam TMetricType metric type used in the distance measure.
  */
-template<typename VecType = arma::vec,
-         typename TMetricType = metric::LMetric<2, true>>
+template<typename MetricType = metric::LMetric<2, true>,
+         typename VecType = arma::vec>
 class BallBound
 {
  public:
@@ -31,8 +36,6 @@ class BallBound
   typedef typename VecType::elem_type ElemType;
   //! A public version of the vector type.
   typedef VecType Vec;
-  //! Needed for BinarySpaceTree.
-  typedef TMetricType MetricType;
 
  private:
   //! The radius of the ball bound.
@@ -40,7 +43,7 @@ class BallBound
   //! The center of the ball bound.
   VecType center;
   //! The metric used in this bound.
-  TMetricType* metric;
+  MetricType* metric;
 
   /**
    * To know whether this object allocated memory to the metric member
@@ -51,7 +54,6 @@ class BallBound
   bool ownsMetric;
 
  public:
-
   //! Empty Constructor.
   BallBound();
 
@@ -120,9 +122,9 @@ class BallBound
    * Calculates minimum bound-to-point squared distance.
    */
   template<typename OtherVecType>
-  ElemType MinDistance(const OtherVecType& point,
-                       typename boost::enable_if<IsVector<OtherVecType>>* = 0)
-      const;
+  ElemType MinDistance(
+      const OtherVecType& point,
+      typename std::enable_if_t<IsVector<OtherVecType>::value>* = 0) const;
 
   /**
    * Calculates minimum bound-to-bound squared distance.
@@ -133,9 +135,9 @@ class BallBound
    * Computes maximum distance.
    */
   template<typename OtherVecType>
-  ElemType MaxDistance(const OtherVecType& point,
-                       typename boost::enable_if<IsVector<OtherVecType>>* = 0)
-      const;
+  ElemType MaxDistance(
+      const OtherVecType& point,
+      typename std::enable_if_t<IsVector<OtherVecType>::value>* = 0) const;
 
   /**
    * Computes maximum distance.
@@ -148,7 +150,7 @@ class BallBound
   template<typename OtherVecType>
   math::RangeType<ElemType> RangeDistance(
       const OtherVecType& other,
-      typename boost::enable_if<IsVector<OtherVecType>>* = 0) const;
+      typename std::enable_if_t<IsVector<OtherVecType>::value>* = 0) const;
 
   /**
    * Calculates minimum and maximum bound-to-bound distance.
@@ -179,18 +181,18 @@ class BallBound
   ElemType Diameter() const { return 2 * radius; }
 
   //! Returns the distance metric used in this bound.
-  const TMetricType& Metric() const { return *metric; }
+  const MetricType& Metric() const { return *metric; }
   //! Modify the distance metric used in this bound.
-  TMetricType& Metric() { return *metric; }
+  MetricType& Metric() { return *metric; }
 
   //! Serialize the bound.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int version);
+  void serialize(Archive& ar, const unsigned int version);
 };
 
 //! A specialization of BoundTraits for this bound type.
-template<typename VecType, typename TMetricType>
-struct BoundTraits<BallBound<VecType, TMetricType>>
+template<typename MetricType, typename VecType>
+struct BoundTraits<BallBound<MetricType, VecType>>
 {
   //! These bounds are potentially loose in some dimensions.
   const static bool HasTightBounds = false;
@@ -201,4 +203,4 @@ struct BoundTraits<BallBound<VecType, TMetricType>>
 
 #include "ballbound_impl.hpp"
 
-#endif // __MLPACK_CORE_TREE_DBALLBOUND_HPP
+#endif // MLPACK_CORE_TREE_DBALLBOUND_HPP

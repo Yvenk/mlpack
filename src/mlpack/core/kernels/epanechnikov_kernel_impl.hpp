@@ -3,12 +3,18 @@
  * @author Neil Slagle
  *
  * Implementation of template-based Epanechnikov kernel functions.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_KERNELS_EPANECHNIKOV_KERNEL_IMPL_HPP
-#define __MLPACK_CORE_KERNELS_EPANECHNIKOV_KERNEL_IMPL_HPP
+#ifndef MLPACK_CORE_KERNELS_EPANECHNIKOV_KERNEL_IMPL_HPP
+#define MLPACK_CORE_KERNELS_EPANECHNIKOV_KERNEL_IMPL_HPP
 
 // In case it hasn't already been included.
 #include "epanechnikov_kernel.hpp"
+#include <mlpack/core/util/log.hpp>
 
 #include <mlpack/core/metrics/lmetric.hpp>
 
@@ -72,11 +78,11 @@ double EpanechnikovKernel::ConvolutionIntegral(const VecTypeA& a,
 
 //! Serialize the kernel.
 template<typename Archive>
-void EpanechnikovKernel::Serialize(Archive& ar,
+void EpanechnikovKernel::serialize(Archive& ar,
                                    const unsigned int /* version */)
 {
-  ar & data::CreateNVP(bandwidth, "bandwidth");
-  ar & data::CreateNVP(inverseBandwidthSquared, "inverseBandwidthSquared");
+  ar & BOOST_SERIALIZATION_NVP(bandwidth);
+  ar & BOOST_SERIALIZATION_NVP(inverseBandwidthSquared);
 }
 
 } // namespace kernel

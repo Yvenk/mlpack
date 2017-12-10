@@ -3,10 +3,15 @@
  * @author Zhihao Lou
  *
  * Laplace (double exponential) distribution used in SA.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
 
-#ifndef __MLPACK_CORE_DISTRIBUTIONS_LAPLACE_DISTRIBUTION_HPP
-#define __MLPACK_CORE_DISTRIBUTIONS_LAPLACE_DISTRIBUTION_HPP
+#ifndef MLPACK_CORE_DISTRIBUTIONS_LAPLACE_DISTRIBUTION_HPP
+#define MLPACK_CORE_DISTRIBUTIONS_LAPLACE_DISTRIBUTION_HPP
 
 namespace mlpack {
 namespace distribution {
@@ -139,10 +144,10 @@ class LaplaceDistribution
    * Serialize the distribution.
    */
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */)
+  void serialize(Archive& ar, const unsigned int /* version */)
   {
-    ar & data::CreateNVP(mean, "mean");
-    ar & data::CreateNVP(scale, "scale");
+    ar & BOOST_SERIALIZATION_NVP(mean);
+    ar & BOOST_SERIALIZATION_NVP(scale);
   }
 
  private:
@@ -150,7 +155,6 @@ class LaplaceDistribution
   arma::vec mean;
   //! Scale parameter of the distribution.
   double scale;
-
 };
 
 } // namespace distribution

@@ -3,13 +3,18 @@
  * @author Ngap Wei Tham
  *
  * Test the MaximalInputs and ColumnsToBlocks functions.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
 #include <mlpack/core.hpp>
 #include <mlpack/core/math/columns_to_blocks.hpp>
 #include <mlpack/methods/sparse_autoencoder/maximal_inputs.hpp>
 
 #include <boost/test/unit_test.hpp>
-#include "old_boost_test_definitions.hpp"
+#include "test_tools.hpp"
 
 using namespace mlpack;
 
@@ -33,7 +38,7 @@ void TestResults(const arma::mat&actualResult, const arma::mat& expectResult)
   BOOST_REQUIRE_EQUAL(expectResult.n_rows, actualResult.n_rows);
   BOOST_REQUIRE_EQUAL(expectResult.n_cols, actualResult.n_cols);
 
-  for(size_t i = 0; i != expectResult.n_elem; ++i)
+  for (size_t i = 0; i != expectResult.n_elem; ++i)
   {
     BOOST_REQUIRE_CLOSE(expectResult[i], actualResult[i], 1e-2);
   }

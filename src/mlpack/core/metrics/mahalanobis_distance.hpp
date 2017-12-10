@@ -3,11 +3,16 @@
  * @author Ryan Curtin
  *
  * The Mahalanobis distance.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_METRICS_MAHALANOBIS_DISTANCE_HPP
-#define __MLPACK_CORE_METRICS_MAHALANOBIS_DISTANCE_HPP
+#ifndef MLPACK_CORE_METRICS_MAHALANOBIS_DISTANCE_HPP
+#define MLPACK_CORE_METRICS_MAHALANOBIS_DISTANCE_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 
 namespace mlpack {
 namespace metric {
@@ -99,14 +104,14 @@ class MahalanobisDistance
 
   //! Serialize the Mahalanobis distance.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int version);
+  void serialize(Archive& ar, const unsigned int version);
 
  private:
   //! The covariance matrix associated with this distance.
   arma::mat covariance;
 };
 
-} // namespace distance
+} // namespace metric
 } // namespace mlpack
 
 #include "mahalanobis_distance_impl.hpp"

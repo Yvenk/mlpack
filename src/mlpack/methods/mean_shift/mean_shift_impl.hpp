@@ -3,15 +3,19 @@
  * @author Shangtong Zhang
  *
  * Mean shift clustering implementation.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_MEAN_SHIFT_MEAN_SHIFT_IMPL_HPP
-#define __MLPACK_METHODS_MEAN_SHIFT_MEAN_SHIFT_IMPL_HPP
+#ifndef MLPACK_METHODS_MEAN_SHIFT_MEAN_SHIFT_IMPL_HPP
+#define MLPACK_METHODS_MEAN_SHIFT_MEAN_SHIFT_IMPL_HPP
 
 #include <mlpack/core/kernels/gaussian_kernel.hpp>
 #include <mlpack/core/kernels/kernel_traits.hpp>
 #include <mlpack/core/metrics/lmetric.hpp>
 #include <mlpack/methods/neighbor_search/neighbor_search.hpp>
-#include <mlpack/methods/neighbor_search/neighbor_search_stat.hpp>
 #include <mlpack/methods/range_search/range_search.hpp>
 
 #include "map"
@@ -23,8 +27,8 @@ namespace mlpack {
 namespace meanshift {
 
 /**
-  * Construct the Mean Shift object.
-  */
+ * Construct the Mean Shift object.
+ */
 template<bool UseKernel, typename KernelType, typename MatType>
 MeanShift<UseKernel, KernelType, MatType>::
 MeanShift(const double radius,
@@ -48,7 +52,7 @@ template<bool UseKernel, typename KernelType, typename MatType>
 double MeanShift<UseKernel, KernelType, MatType>::
 EstimateRadius(const MatType& data, double ratio)
 {
-  neighbor::AllkNN neighborSearch(data);
+  neighbor::KNN neighborSearch(data);
 
   /**
    * For each point in dataset, select nNeighbors nearest points and get
@@ -257,7 +261,7 @@ inline void MeanShift<UseKernel, KernelType, MatType>::Cluster(
   }
 
   // Assign centroids to each point.
-  neighbor::AllkNN neighborSearcher(centroids);
+  neighbor::KNN neighborSearcher(centroids);
   arma::mat neighborDistances;
   arma::Mat<size_t> resultingNeighbors;
   neighborSearcher.Search(data, 1, resultingNeighbors, neighborDistances);

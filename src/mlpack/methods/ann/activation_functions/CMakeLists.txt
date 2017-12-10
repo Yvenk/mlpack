@@ -6,6 +6,8 @@ set(SOURCES
   softsign_function.hpp
   tanh_function.hpp
   rectifier_function.hpp
+  softplus_function.hpp
+  swish_function.hpp
 )
 
 # Add directory name to sources.

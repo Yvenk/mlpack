@@ -4,9 +4,14 @@
  *
  * An implementation of the binary-tree-based numeric splitting procedure
  * described by Gama, Rocha, and Medas in their KDD 2003 paper.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_HOEFFDING_SPLIT_BINARY_NUMERIC_SPLIT_HPP
-#define __MLPACK_METHODS_HOEFFDING_SPLIT_BINARY_NUMERIC_SPLIT_HPP
+#ifndef MLPACK_METHODS_HOEFFDING_SPLIT_BINARY_NUMERIC_SPLIT_HPP
+#define MLPACK_METHODS_HOEFFDING_SPLIT_BINARY_NUMERIC_SPLIT_HPP
 
 #include "binary_numeric_split_info.hpp"
 
@@ -50,7 +55,7 @@ class BinaryNumericSplit
    *
    * @param numClasses Number of classes in dataset.
    */
-  BinaryNumericSplit(const size_t numClasses);
+  BinaryNumericSplit(const size_t numClasses = 0);
 
   /**
    * Create the BinaryNumericSplit object with the given number of classes,
@@ -103,7 +108,7 @@ class BinaryNumericSplit
 
   //! Serialize the object.
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */);
+  void serialize(Archive& ar, const unsigned int /* version */);
 
  private:
   //! The elements seen so far, in sorted order.

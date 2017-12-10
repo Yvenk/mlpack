@@ -1,11 +1,16 @@
-/**
+﻿/**
  * @file core.hpp
  *
  * Include all of the base components required to write MLPACK methods, and the
  * main MLPACK Doxygen documentation.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_HPP
-#define __MLPACK_CORE_HPP
+#ifndef MLPACK_CORE_HPP
+#define MLPACK_CORE_HPP
 
 /**
  * @mainpage mlpack Documentation
@@ -21,7 +26,8 @@
  * mlpack uses the Armadillo C++ matrix library (http://arma.sourceforge.net)
  * for general matrix, vector, and linear algebra support.  mlpack also uses the
  * program_options, math_c99, and unit_test_framework components of the Boost
- * library; in addition, LibXml2 is used.
+ * library, and optionally uses libbfd and libdl to give backtraces when
+ * compiled with debugging symbols on some platforms.
  *
  * @section howto How To Use This Documentation
  *
@@ -50,11 +56,10 @@
  * A full list of executables is given below:
  *
  * - mlpack_adaboost
- * - mlpack_allkfn
- * - mlpack_allknn
- * - mlpack_allkrann
+ * - mlpack_approx_kfn
  * - mlpack_cf
  * - mlpack_decision_stump
+ * - mlpack_decision_tree
  * - mlpack_det
  * - mlpack_emst
  * - mlpack_fastmks
@@ -67,7 +72,10 @@
  * - mlpack_hmm_generate
  * - mlpack_hoeffding_tree
  * - mlpack_kernel_pca
+ * - mlpack_kfn
  * - mlpack_kmeans
+ * - mlpack_knn
+ * - mlpack_krann
  * - mlpack_lars
  * - mlpack_linear_regression
  * - mlpack_local_coordinate_coding
@@ -92,6 +100,8 @@
  *  - @ref iodoc
  *  - @ref timer
  *  - @ref sample
+ *  - @ref cv
+ *  - @ref hpt
  *  - @ref verinfo
  *
  * Tutorials on specific methods are also available.
@@ -125,8 +135,7 @@
  *  - Simple Least-Squares Linear Regression -
  *        mlpack::regression::LinearRegression
  *  - Sparse Coding - mlpack::sparse_coding::SparseCoding
- *  - Tree-based neighbor search (AllkNN, AllkFN) -
- *        mlpack::neighbor::NeighborSearch
+ *  - Tree-based neighbor search (KNN, KFN) - mlpack::neighbor::NeighborSearch
  *  - Tree-based range search - mlpack::range::RangeSearch
  *
  * @section remarks Final Remarks
@@ -185,6 +194,38 @@
  *   - Barak Pearlmutter <barak+git@pearlmutter.net>
  *   - Ivari Horm <ivari@risk.ee>
  *   - Dhawal Arora <d.p.arora1@gmail.com>
+ *   - Alexander Leinoff <alexander-leinoff@uiowa.edu>
+ *   - Palash Ahuja <abhor902@gmail.com>
+ *   - Yannis Mentekidis <mentekid@gmail.com>
+ *   - Ranjan Mondal <ranjan.rev@gmail.com>
+ *   - Mikhail Lozhnikov <lozhnikovma@gmail.com>
+ *   - Marcos Pividori <marcos.pividori@gmail.com>
+ *   - Keon Kim <kwk236@gmail.com>
+ *   - Nilay Jain <nilayjain13@gmail.com>
+ *   - Peter Lehner <peter.lehner@dlr.de>
+ *   - Anuraj Kanodia <akanuraj200@gmail.com>
+ *   - Ivan Georgiev <ivan@jonan.info>
+ *   - Shikhar Bhardwaj <shikharbhardwaj68@gmail.com>
+ *   - Yashu Seth <yashuseth2503@gmail.com>
+ *   - Mike Izbicki <mike@izbicki.me>
+ *   - Sudhanshu Ranjan <sranjan.sud@gmail.com>
+ *   - Piyush Jaiswal <piyush.jaiswal@st.niituniversity.in>
+ *   - Dinesh Raj <dinu.iota@gmail.com>
+ *   - Prasanna Patil <prasannapatil08@gmail.com>
+ *   - Lakshya Agrawal <zeeshan.lakshya@gmail.com>
+ *   - Vivek Pal <vivekpal.dtu@gmail.com>
+ *   - Praveen Ch <chvsp972911@gmail.com>
+ *   - Kirill Mishchenko <ki.mishchenko@gmail.com>
+ *   - Abhinav Moudgil <abhinavmoudgil95@gmail.com>
+ *   - Thyrix Yang <thyrixyang@gmail.com>
+ *   - Sagar B Hathwar <sagarbhathwar@gmail.com>
+ *   - Nishanth Hegde <hegde.nishanth@gmail.com>
+ *   - Parminder Singh <parmsingh101@gmail.com>
+ *   - CodeAi (deep learning bug detector) <benjamin.bales@assrc.us>
+ *   - Franciszek Stokowacki <franek.stokowacki@gmail.com>
+ *   - Samikshya Chand <samikshya289@gmail.com>
+ *   - N Rajiv Vaidyanathan <rajivvaidyanathan4@gmail.com>
+ *   - Kartik Nighania <kartiknighania@gmail.com>
  */
 
 // First, include all of the prerequisites.
@@ -194,6 +235,7 @@
 #include <mlpack/core/util/arma_traits.hpp>
 #include <mlpack/core/util/log.hpp>
 #include <mlpack/core/util/cli.hpp>
+#include <mlpack/core/util/deprecated.hpp>
 #include <mlpack/core/data/load.hpp>
 #include <mlpack/core/data/save.hpp>
 #include <mlpack/core/data/normalize_labels.hpp>
@@ -203,10 +245,14 @@
 #include <mlpack/core/math/lin_alg.hpp>
 #include <mlpack/core/math/range.hpp>
 #include <mlpack/core/math/round.hpp>
+#include <mlpack/core/math/shuffle_data.hpp>
+#include <mlpack/core/math/make_alias.hpp>
 #include <mlpack/core/dists/discrete_distribution.hpp>
 #include <mlpack/core/dists/gaussian_distribution.hpp>
 #include <mlpack/core/dists/laplace_distribution.hpp>
-//mlpack::backtrace only for linux
+#include <mlpack/core/dists/gamma_distribution.hpp>
+
+// mlpack::backtrace only for linux
 #ifdef HAS_BFD_DL
   #include <mlpack/core/util/backtrace.hpp>
 #endif
@@ -223,6 +269,11 @@
 #include <mlpack/core/kernels/pspectrum_string_kernel.hpp>
 #include <mlpack/core/kernels/spherical_kernel.hpp>
 #include <mlpack/core/kernels/triangular_kernel.hpp>
+
+// Use OpenMP if compiled with -DHAS_OPENMP.
+#ifdef HAS_OPENMP
+  #include <omp.h>
+#endif
 
 // Use Armadillo's C++ version detection.
 #ifdef ARMA_USE_CXX11

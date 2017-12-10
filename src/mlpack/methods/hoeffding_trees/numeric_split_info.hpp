@@ -3,11 +3,16 @@
  * @author Ryan Curtin
  *
  * After a numeric split has been made, this holds information on the split.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_METHODS_HOEFFDING_TREES_NUMERIC_SPLIT_INFO_HPP
-#define __MLPACK_METHODS_HOEFFDING_TREES_NUMERIC_SPLIT_INFO_HPP
+#ifndef MLPACK_METHODS_HOEFFDING_TREES_NUMERIC_SPLIT_INFO_HPP
+#define MLPACK_METHODS_HOEFFDING_TREES_NUMERIC_SPLIT_INFO_HPP
 
-#include <mlpack/core.hpp>
+#include <mlpack/prereqs.hpp>
 
 namespace mlpack {
 namespace tree {
@@ -33,9 +38,9 @@ class NumericSplitInfo
 
   //! Serialize the split (save/load the split points).
   template<typename Archive>
-  void Serialize(Archive& ar, const unsigned int /* version */)
+  void serialize(Archive& ar, const unsigned int /* version */)
   {
-    ar & data::CreateNVP(splitPoints, "splitPoints");
+    ar & BOOST_SERIALIZATION_NVP(splitPoints);
   }
 
  private:

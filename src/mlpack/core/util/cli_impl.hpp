@@ -3,69 +3,23 @@
  * @author Matthew Amidon
  *
  * Implementation of templated functions of the CLI class.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef __MLPACK_CORE_UTIL_CLI_IMPL_HPP
-#define __MLPACK_CORE_UTIL_CLI_IMPL_HPP
+#ifndef MLPACK_CORE_UTIL_CLI_IMPL_HPP
+#define MLPACK_CORE_UTIL_CLI_IMPL_HPP
 
 // In case it has not already been included.
 #include "cli.hpp"
+#include "prefixedoutstream.hpp"
 
-// Include option.hpp here because it requires CLI but is also templated.
-#include "option.hpp"
+#include <mlpack/core/data/load.hpp>
+#include <mlpack/core/data/save.hpp>
 
 namespace mlpack {
-
-/**
- * @brief Adds a parameter to CLI, making it accessibile via GetParam &
- *     CheckValue.
- *
- * @tparam T The type of the parameter.
- * @param identifier The name of the parameter, eg foo in bar/foo.
- * @param description A string description of the parameter.
- * @param parent The name of the parent of the parameter,
- *   eg bar/foo in bar/foo/buzz.
- * @param required If required, the program will refuse to run
- *   unless the parameter is specified.
- */
-template<typename T>
-void CLI::Add(const std::string& path,
-              const std::string& description,
-              const std::string& alias,
-              bool required)
-{
-
-  po::options_description& desc = CLI::GetSingleton().desc;
-  // Must make use of boost syntax here.
-  std::string progOptId = alias.length() ? path + "," + alias : path;
-
-  // Add the alias, if necessary
-  AddAlias(alias, path);
-
-  // Add the option to boost program_options.
-  desc.add_options()(progOptId.c_str(), po::value<T>(), description.c_str());
-
-  // Make sure the appropriate metadata is inserted into gmap.
-  gmap_t& gmap = GetSingleton().globalValues;
-
-  ParamData data;
-  T tmp = T();
-
-  data.desc = description;
-  data.name = path;
-  data.tname = TYPENAME(T);
-  data.value = boost::any(tmp);
-  data.wasPassed = false;
-
-  gmap[path] = data;
-
-  // If the option is required, add it to the required options list.
-  if (required)
-    GetSingleton().requiredOptions.push_front(path);
-}
-
-// We specialize this in cli.cpp.
-template<>
-bool& CLI::GetParam<bool>(const std::string& identifier);
 
 /**
  * @brief Returns the value of the specified parameter.
@@ -73,7 +27,7 @@ bool& CLI::GetParam<bool>(const std::string& identifier);
  *   more or less valid value is returned.
  *
  * @tparam T The type of the parameter.
- * @param identifier The full pathname of the parameter.
+ * @param identifier The full name of the parameter.
  *
  * @return The value of the parameter.  Use CLI::CheckValue to determine if it's
  *     valid.
@@ -81,32 +35,117 @@ bool& CLI::GetParam<bool>(const std::string& identifier);
 template<typename T>
 T& CLI::GetParam(const std::string& identifier)
 {
-  // Used to ensure we have a valid value.
-  T tmp = T();
+  // Only use the alias if the parameter does not exist as given.
+  std::string key =
+      (GetSingleton().parameters.count(identifier) == 0 &&
+       identifier.length() == 1 && GetSingleton().aliases.count(identifier[0]))
+      ? GetSingleton().aliases[identifier[0]] : identifier;
 
-  // Used to index into the globalValues map.
-  std::string key = std::string(identifier);
-  gmap_t& gmap = GetSingleton().globalValues;
+  if (GetSingleton().parameters.count(key) == 0)
+    Log::Fatal << "Parameter --" << key << " does not exist in this program!"
+        << std::endl;
 
-  // Now check if we have an alias.
-  amap_t& amap = GetSingleton().aliasValues;
-  if (amap.count(key))
-    key = amap[key];
+  util::ParamData& d = GetSingleton().parameters[key];
 
-  // What if we don't actually have any value?
-  if (!gmap.count(key))
+  // Make sure the types are correct.
+  if (TYPENAME(T) != d.tname)
+    Log::Fatal << "Attempted to access parameter --" << key << " as type "
+        << TYPENAME(T) << ", but its true type is " << d.tname << "!"
+        << std::endl;
+
+  // Do we have a special mapped function?
+  if (CLI::GetSingleton().functionMap[d.tname].count("GetParam") != 0)
   {
-    gmap[key] = ParamData();
-    gmap[key].value = boost::any(tmp);
-    *boost::any_cast<T>(&gmap[key].value) = tmp;
+    T* output = NULL;
+    CLI::GetSingleton().functionMap[d.tname]["GetParam"](d, NULL,
+        (void*) &output);
+    return *output;
   }
+  else
+  {
+    return *boost::any_cast<T>(&d.value);
+  }
+}
 
-  // What if we have meta-data, but no data?
-  boost::any val = gmap[key].value;
-  if (val.empty())
-    gmap[key].value = boost::any(tmp);
+/**
+ * Cast the given parameter of the given type to a short, printable std::string,
+ * for use in status messages.  Ideally the message returned here should be only
+ * a handful of characters, and certainly no longer than one line.
+ *
+ * @param identifier The name of the parameter in question.
+ */
+template<typename T>
+std::string CLI::GetPrintableParam(const std::string& identifier)
+{
+  // Only use the alias if the parameter does not exist as given.
+  std::string key = ((GetSingleton().parameters.count(identifier) == 0) &&
+      (identifier.length() == 1) &&
+      (GetSingleton().aliases.count(identifier[0]) > 0)) ?
+      GetSingleton().aliases[identifier[0]] : identifier;
 
-  return *boost::any_cast<T>(&gmap[key].value);
+  if (GetSingleton().parameters.count(key) == 0)
+    Log::Fatal << "Parameter --" << key << " does not exist in this program!"
+        << std::endl;
+
+  util::ParamData& d = GetSingleton().parameters[key];
+
+  // Make sure the types are correct.
+  if (TYPENAME(T) != d.tname)
+    Log::Fatal << "Attempted to access parameter --" << key << " as type "
+        << TYPENAME(T) << ", but its true type is " << d.tname << "!"
+        << std::endl;
+
+  // Do we have a special mapped function?
+  if (CLI::GetSingleton().functionMap[d.tname].count("GetPrintableParam") != 0)
+  {
+    std::string output;
+    CLI::GetSingleton().functionMap[d.tname]["GetPrintableParam"](d, NULL,
+        (void*) &output);
+    return output;
+  }
+  else
+  {
+    std::ostringstream oss;
+    oss << "no GetPrintableParam function handler registered for type "
+        << d.cppType;
+    throw std::runtime_error(oss.str());
+  }
+}
+
+template<typename T>
+T& CLI::GetRawParam(const std::string& identifier)
+{
+  // Only use the alias if the parameter does not exist as given.
+  std::string key =
+      (GetSingleton().parameters.count(identifier) == 0 &&
+       identifier.length() == 1 && GetSingleton().aliases.count(identifier[0]))
+      ? GetSingleton().aliases[identifier[0]] : identifier;
+
+  if (GetSingleton().parameters.count(key) == 0)
+    Log::Fatal << "Parameter --" << key << " does not exist in this program!"
+        << std::endl;
+
+  util::ParamData& d = GetSingleton().parameters[key];
+
+  // Make sure the types are correct.
+  if (TYPENAME(T) != d.tname)
+    Log::Fatal << "Attempted to access parameter --" << key << " as type "
+        << TYPENAME(T) << ", but its true type is " << d.tname << "!"
+        << std::endl;
+
+  // Do we have a special mapped function?
+  if (CLI::GetSingleton().functionMap[d.tname].count("GetRawParam") != 0)
+  {
+    T* output = NULL;
+    CLI::GetSingleton().functionMap[d.tname]["GetRawParam"](d, NULL,
+        (void*) &output);
+    return *output;
+  }
+  else
+  {
+    // Use the regular GetParam().
+    return GetParam<T>(identifier);
+  }
 }
 
 } // namespace mlpack

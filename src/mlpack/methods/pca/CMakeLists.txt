@@ -2,7 +2,9 @@
 # Anything not in this list will not be compiled into mlpack.
 set(SOURCES
   pca.hpp
-  pca.cpp
+  pca_impl.hpp
+#  pca_nomain.hpp
+#  pca_nomain.cpp
 )
 
 # Add directory name to sources.
@@ -14,10 +16,7 @@ endforeach()
 # the parent scope).
 set(MLPACK_SRCS ${MLPACK_SRCS} ${DIR_SRCS} PARENT_SCOPE)
 
-add_executable(mlpack_pca
-  pca_main.cpp
-)
-target_link_libraries(mlpack_pca
-  mlpack
-)
-install(TARGETS mlpack_pca RUNTIME DESTINATION bin)
+add_subdirectory(decomposition_policies)
+
+add_cli_executable(pca)
+add_python_binding(pca)

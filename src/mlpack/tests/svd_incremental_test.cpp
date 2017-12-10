@@ -1,3 +1,15 @@
+/**
+ * @file svd_incremental_test.cpp
+ * @author Sumedh Ghaisas
+ *
+ * Tests for SVDIncompleteIncrementalLearning and
+ * SVDCompleteIncrementalLearning.
+ *
+ * mlpack is free software; you may redistribute it and/or modify it under the
+ * terms of the 3-clause BSD license.  You should have received a copy of the
+ * 3-clause BSD license along with mlpack.  If not, see
+ * http://www.opensource.org/licenses/BSD-3-Clause for more information.
+ */
 #include <mlpack/core.hpp>
 #include <mlpack/methods/amf/amf.hpp>
 #include <mlpack/methods/amf/update_rules/svd_incomplete_incremental_learning.hpp>
@@ -9,7 +21,7 @@
 #include <mlpack/methods/amf/termination_policies/validation_RMSE_termination.hpp>
 
 #include <boost/test/unit_test.hpp>
-#include "old_boost_test_definitions.hpp"
+#include "test_tools.hpp"
 
 BOOST_AUTO_TEST_SUITE(SVDIncrementalTest);
 
@@ -19,12 +31,12 @@ using namespace mlpack::amf;
 using namespace arma;
 
 /**
- * Test for convergence of incomplete incremenal learning
+ * Test for convergence of incomplete incremenal learning.
  */
 BOOST_AUTO_TEST_CASE(SVDIncompleteIncrementalConvergenceTest)
 {
   sp_mat data;
-  data.sprandn(1000, 1000, 0.2);
+  data.sprandn(100, 100, 0.2);
 
   SVDIncompleteIncrementalLearning svd(0.01);
   IncompleteIncrementalTermination<SimpleToleranceTermination<sp_mat> > iit;
@@ -33,7 +45,7 @@ BOOST_AUTO_TEST_CASE(SVDIncompleteIncrementalConvergenceTest)
       RandomInitialization,
       SVDIncompleteIncrementalLearning> amf(iit, RandomInitialization(), svd);
 
-  mat m1,m2;
+  mat m1, m2;
   amf.Apply(data, 2, m1, m2);
 
   BOOST_REQUIRE_NE(amf.TerminationPolicy().Iteration(),
@@ -46,7 +58,7 @@ BOOST_AUTO_TEST_CASE(SVDIncompleteIncrementalConvergenceTest)
 BOOST_AUTO_TEST_CASE(SVDCompleteIncrementalConvergenceTest)
 {
   sp_mat data;
-  data.sprandn(1000, 1000, 0.2);
+  data.sprandn(100, 100, 0.2);
 
   SVDCompleteIncrementalLearning<sp_mat> svd(0.01);
   CompleteIncrementalTermination<SimpleToleranceTermination<sp_mat> > iit;
@@ -56,7 +68,7 @@ BOOST_AUTO_TEST_CASE(SVDCompleteIncrementalConvergenceTest)
       SVDCompleteIncrementalLearning<sp_mat> > amf(iit,
                                                    RandomInitialization(),
                                                    svd);
-  mat m1,m2;
+  mat m1, m2;
   amf.Apply(data, 2, m1, m2);
 
   BOOST_REQUIRE_NE(amf.TerminationPolicy().Iteration(),
@@ -89,7 +101,7 @@ class SpecificRandomInitialization
 BOOST_AUTO_TEST_CASE(SVDIncompleteIncrementalRegularizationTest)
 {
   mat dataset;
-  data::Load("GroupLens100k.csv", dataset);
+  data::Load("GroupLensSmall.csv", dataset);
 
   // Generate list of locations for batch insert constructor for sparse
   // matrices.
